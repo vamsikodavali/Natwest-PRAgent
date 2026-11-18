@@ -43,6 +43,7 @@ If the command fails, print its message and stop. `./bin/guardian doctor` diagno
 
 1. **Reuse:** Read each of the top 4 candidates' `abs_path` from `line` to `end_line`. Don't search for the file: `abs_path` is correct even when the context folder is outside this directory. Then mark each one **covers** (does the job, maybe through a parameter), **partial: <gap in five words or fewer>**, or drop it (the name matched but the behaviour is different). Everything you need is in this file, so don't open the other skills.
 2. **PRs:** drop PRs about something else. For a rejected PR with an empty `reason`, read its `source` JSON and quote the reviewer's real objection. Never paraphrase it into something stronger.
+2b. **Reading PRs:** to look inside a PR record, Grep its `source` file for `"number": <N>` (with `-A` context) or Read it with an offset. Don't write ad-hoc scripts; they are not permitted and waste a step.
 3. **Owners:** if you dropped a reuse candidate, drop people whose only evidence was that file. If you kept or found a file the engine's `owners` don't cover, get its owners with `./bin/guardian owners --format json <repo>/<path> ...`, never with raw `git log` (that needs approval and fails in non-interactive runs). If no candidate survived but a PR did, its author and reviewer are still worth asking.
 
 ## 3. Output: your whole reply is this block (≤ 25 lines). Start with `## Blueprint`; no sentence before or after it

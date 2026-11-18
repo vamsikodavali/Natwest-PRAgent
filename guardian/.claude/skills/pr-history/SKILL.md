@@ -41,6 +41,7 @@ Each match gives `number`, `title`, `state` (`merged` | `rejected` | `open`), `r
 
 - Drop matches whose title and body are about something else, even if a word matched.
 - For each **rejected** match: if `reason` is empty or unclear, Read its `source` file (an absolute path), find that PR, and pull the reviewer's actual objection from the reviews or comments. Quote it. Don't paraphrase it into something stronger. If no reason was ever written, say `no reason recorded`.
+- To look inside a PR record, Grep its `source` file for `"number": <N>` (with `-A` context) or Read it with an offset. Don't write ad-hoc scripts; they are not permitted and waste a step.
 - For a **merged** match, say in a few words why it's relevant: it added the helper, or it touched the same file.
 
 ## 3. Output: your whole reply is this block. No sentence before or after it
