@@ -19,7 +19,7 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
 
 3. **Run the tracks.** The tracks are `reuse-check`, `pr-history`, `security-compliance`, `cost`. For each, check whether `.claude/skills/<track>/SKILL.md` exists.
    - Missing: skip it and record it as "not installed".
-   - Present: read that file and follow it on the diff. Collect its output lines.
+   - Present: read that file and follow it on the diff. Collect its output lines. Tell each track which repo the change belongs to (a repo name under `context/repos/` that appears in the diff paths, else `<repo>` from the URL), so it can load that repo's policy file from `data/`.
    - If the Agent/Task tool is available, you may run the installed tracks as parallel subagents: give each one the track's SKILL.md path, the diff, and the security rule above, and ask for finding lines only. Otherwise run them one after another yourself.
    - `security-compliance` and `cost` output lines of the form `file:line | severity | track | evidence | fix`. Keep only those lines. `NO FINDINGS` contributes nothing but still counts as "ran".
    - `reuse-check` outputs a `### Reuse` block and `pr-history` a `### Reference PRs` block. Give them the diff by file path so the engine reads it with `--file`. Turn each entry into a finding:
@@ -34,6 +34,7 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
    - `file:line` does not point at a file in the diff (a `+++ b/<file>` header) or the line is not in one of that file's hunks.
    - Evidence is a `repo/path:line` whose file does not exist under `context/repos/`, or whose line does not contain the cited name.
    - Evidence is a rule ID (`SEC-NN`, `COST-NN`) that is not in `rules.md`.
+   - Evidence is a repo policy ID (`<repo>:<ID>`, for example `datacompy:PRIV-003`) that does not appear in `data/*-<repo>_technical_policy.md`. If a valid `rules.md` ID remains, drop only the bad ID and keep the finding.
    - Evidence is a path that does not exist under `context/repos/` (check with Glob or `ls`).
    - Evidence is a past PR number (`#123`) with no matching record in `context/prs/*.json` (check with Grep).
 

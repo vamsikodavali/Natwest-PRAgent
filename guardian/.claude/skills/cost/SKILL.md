@@ -12,6 +12,7 @@ A unified diff, given as pasted text, on stdin, or as a file path (Read it). The
 
 ## Steps
 1. Read `rules.md` in the repo root. Use every rule whose ID starts with `COST-`, with its default severity. Do not use other rules.
+1a. Repo policy: if you were told which repo the diff is for, or the diff paths contain a repo name that has a file `data/*-<repo>_technical_policy.md`, Read that file too and use its Cost and FinOps section (section 12) and any `COST-` rows in its Policy Registry (section 16). When an added line goes against one, cite it after the `rules.md` ID as `<repo>:<policy ID>`, for example `COST-02, locopy:COST-001`. Never cite a policy ID you did not read in that file.
 2. Check ONLY added (`+`) or changed lines. Context lines and removed lines are never findings by themselves.
 3. Look for what the COST rules describe:
    - Size or count increases in Terraform, YAML, JSON config or code (instance type, node or replica count, cluster or warehouse size, `WAREHOUSE_SIZE`, `ALTER WAREHOUSE`). Pair the removed (`-`) and added (`+`) values. If the size or count went up, flag it and write old → new in the fix. If it went down or stayed equal, it is not a finding.
@@ -23,7 +24,7 @@ A unified diff, given as pasted text, on stdin, or as a file path (Read it). The
 ## Output
 One line per finding and nothing else, no preamble, no summary, no code fences:
 
-`file:line | severity | cost | <rule ID> | fix`
+`file:line | severity | cost | <rule ID>[, <repo>:<policy ID>] | fix`
 
 - `file` is the new path from the `+++` header, without the `b/` prefix.
 - `severity` is `BLOCKER`, `WARN` or `INFO`, from `rules.md`.
