@@ -4,4 +4,5 @@ __pycache__/
 .ruff_cache/
 .sample-context/
 .public-context/
+.demo-context/
 out/

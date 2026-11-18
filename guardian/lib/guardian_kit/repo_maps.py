@@ -25,7 +25,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .context import Repo
+from .context import GUARDIAN_ROOT, Repo
 
 _BREAKDOWN_NAME = re.compile(
     r"(structure|breakdown|repo[-_ ]?map|codebase|architecture|overview|layout|map|files|folders|tree)",
@@ -55,6 +55,20 @@ class RepoMap:
         return own, inherited
 
 
+def _data_dirs(context: Path) -> list[Path]:
+    """Folders of per-repo documents (policy docs, breakdowns) kept beside the context."""
+    out: list[Path] = []
+    for d in (context / "data", context.parent / "data", GUARDIAN_ROOT / "data"):
+        if d.is_dir() and d.resolve() not in {o.resolve() for o in out}:
+            out.append(d)
+    return out
+
+
+def _names_repo(stem: str, repo_name: str) -> bool:
+    """`capitalone-locopy_technical_policy` names `locopy`; `capitalone-locopy-v2` does not."""
+    return re.search(rf"(^|[-_.]){re.escape(repo_name.lower())}([-_.]|$)", stem.lower()) is not None
+
+
 def find_map_files(context: Path, repo: Repo) -> tuple[list[Path], bool]:
     found: list[Path] = []
     for cand in (
@@ -64,6 +78,8 @@ def find_map_files(context: Path, repo: Repo) -> tuple[list[Path], bool]:
     ):
         if cand.is_file():
             found.append(cand)
+    for d in _data_dirs(context):
+        found.extend(sorted(p for p in d.glob("*.md") if _names_repo(p.stem, repo.name)))
     try:
         top_md = sorted(p for p in repo.path.iterdir() if p.is_file() and p.suffix.lower() == ".md")
     except OSError:
@@ -124,14 +140,40 @@ def _clean(line: str) -> str:
     return re.sub(r"\s+", " ", line).strip()
 
 
+# In long policy / engineering documents only these sections say what code *does*.
+# Security, cost, testing or "gaps" sections also name files, but attaching those
+# lines to code turns every file into a match for every ticket.
+_DESCRIPTIVE_SECTION = re.compile(
+    r"architecture|structure|layout|module|component|reus|capabilit|breakdown|overview of (the )?code|"
+    r"files?\b|folders?|director|package|entry points?|code ?map|what lives where",
+    re.I,
+)
+
+
+def _section_filter(text: str):
+    """Return a predicate over top-level (#/##) headings, or None to keep every section."""
+    tops = [m.group(2) for m in (_HEADING.match(line) for line in text.splitlines()) if m and len(m.group(1)) <= 2]
+    sections = tops[1:] if len(tops) > 1 else tops  # the first heading is usually the title
+    descriptive = [t for t in sections if _DESCRIPTIVE_SECTION.search(t)]
+    if len(sections) < 6 or not descriptive:
+        return None  # a short breakdown file, or nothing to choose: use it all
+    return lambda heading: bool(_DESCRIPTIVE_SECTION.search(heading))
+
+
 def parse_map(text: str, index: _PathIndex, rmap: RepoMap) -> None:
     heading_stack: list[tuple[int, list[tuple[str, bool]]]] = []
     in_fence = False
+    keep_section = _section_filter(text)
+    in_kept = keep_section is None
     for raw in text.splitlines():
         if raw.strip().startswith("```"):
             in_fence = not in_fence
             continue
         h = _HEADING.match(raw) if not in_fence else None
+        if keep_section is not None and h and len(h.group(1)) <= 2:
+            in_kept = keep_section(h.group(2))
+        if not in_kept:
+            continue
         targets: list[tuple[str, bool]] = []
         stripped = raw
         for m in _PATHISH.finditer(raw):

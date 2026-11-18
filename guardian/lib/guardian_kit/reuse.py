@@ -42,6 +42,7 @@ NONPROD_PATH = re.compile(r"(^|/)(docs?|scripts?|examples?|samples?|benchmarks?|
 RELATIVE_CUTOFF = 0.4  # drop candidates scoring under 40% of the best one
 MIN_CONFIDENCE = 0.08  # floor on score / best possible score (every concept in the name)
 NAME_PRECISION_BASE, NAME_PRECISION_GAIN = 0.9, 0.3  # x0.9 (name unexplained) .. x1.2 (fully explained); tuned with `guardian eval`
+DOC_LENGTH_B = 0.5  # 0 = no length normalisation, 1 = full (BM25 b)
 SIBLING_RATIO = 0.75  # a same-file hit this close to the best one gets its own entry (grab-bag utils files)
 MIN_CONCEPTS = 2  # a single shared word is not evidence of reuse
 
@@ -142,7 +143,12 @@ def _ideal_score(query: Query, idf: dict[str, float], present: set[str]) -> floa
     return sum(best.values()) * 1.4
 
 
-def score_symbol(sym: Symbol, query: Query, idf: dict[str, float]) -> tuple[float, list[str], float]:
+def score_symbol(sym: Symbol, query: Query, idf: dict[str, float], avg_doc: float = 0.0) -> tuple[float, list[str], float]:
+    # BM25-style length normalisation: a word in a 4-line docstring says more than
+    # the same word somewhere in a 60-line one.
+    doc_norm = 1.0
+    if avg_doc and sym.doc_stems:
+        doc_norm = 1.0 / (1 - DOC_LENGTH_B + DOC_LENGTH_B * len(sym.doc_stems) / avg_doc)
     best: dict[int, tuple[float, str]] = {}
     for term, (concept, weight) in query.terms.items():
         fw = 0.0
@@ -151,7 +157,7 @@ def score_symbol(sym: Symbol, query: Query, idf: dict[str, float]) -> tuple[floa
         elif term in sym.map_stems:
             fw = FIELD_WEIGHTS["map"]
         elif term in sym.doc_stems:
-            fw = FIELD_WEIGHTS["doc"]
+            fw = FIELD_WEIGHTS["doc"] * min(doc_norm, 1.5)
         elif term in sym.path_stems:
             fw = FIELD_WEIGHTS["path"]
         if not fw:
@@ -197,13 +203,15 @@ def search(
         indexes = [index_repo(context, r) for r in list_repos(context, repos)]
     symbols = [s for ix in indexes for s in ix.symbols]
     idf, present = _idf(symbols, query)
+    documented = [len(s.doc_stems) for s in symbols if s.doc_stems]
+    avg_doc = sum(documented) / len(documented) if documented else 0.0
     ideal = _ideal_score(query, idf, present)
 
     scored: list[Candidate] = []
     for s in symbols:
         if s.is_test and not include_tests:
             continue
-        score, matched, coverage = score_symbol(s, query, idf)
+        score, matched, coverage = score_symbol(s, query, idf, avg_doc)
         min_concepts = min(MIN_CONCEPTS, query.concept_count)
         exact = bool(query.identifiers) and s.name in query.identifiers
         # `throttle()`, `speedometer()`: one concept, but it *is* the whole name

@@ -40,12 +40,13 @@ The model handles the language at both ends; the engine handles the search in th
 
 `guardian eval` runs labelled tickets (each with a known answer, or with none) and reports how often the right helper comes back:
 
-| Retrieval quality | Public repos¹: engine alone | Public repos¹: with ① | Sample context: engine alone | Sample context: with ① |
-|---|---|---|---|---|
-| right helper in top 3 | 62% | **88%** | 83% | **100%** |
-| right helper ranked 1st | 38% | 71% | 75% | 83% |
-| silent when nothing exists | 75% | 75% | 100% | 100% |
+| Retrieval quality (engine alone → with ①) | Demo repos² | Public repos¹ | Sample context |
+|---|---|---|---|
+| right helper in top 3 | 64% → **86%** | 67% → **92%** | 83% → **100%** |
+| right helper ranked 1st | 36% → 64% | 46% → 71% | 75% → 83% |
+| silent when nothing exists | 67% | 75% | 100% |
 
+² 14 tickets with an answer and 3 without, on locopy and datacompy (the demo repos), with the `guardian/data/` policy documents loaded. Targets come from each policy's "Reusable Components" section. Run with `make eval-demo`.
 ¹ 24 tickets on requests, axios and spring-petclinic at pinned commits. I didn't write that code, and the tickets avoid the function names. Reproduce with `make eval-public`. The expansions in the case files simulate step ①. In live runs Claude writes its own, for example finding `add_business_days` from "when will funds land if sent the Friday before Christmas?", where the engine alone finds nothing.
 
 CI fails if top-3 recall on the sample set drops below 75%. When P1 reports a miss, add it as a case first, then fix it.
@@ -53,7 +54,7 @@ CI fails if top-3 recall on the sample set drops below 75%. When P1 reports a mi
 ### Reuse ranking (`reuse.py`)
 - **Intent extraction:** the ticket is split into concepts, and each concept is grown with banking-aware synonyms (`mask ≈ redact ≈ obfuscate`, `iban ≈ bic ≈ sortcode`, `retry ≈ backoff`). For a diff, only the **added** lines are used, and names the diff defines count double.
 - **Symbol index:** functions, methods and types across Python, JS/TS, Java, Kotlin, Go, Rust, Ruby, PHP, C#, shell, SQL and Terraform, together with their docstrings and doc comments. This includes Java interface and abstract methods such as Spring Data finders.
-- **Repo breakdown docs:** each repo's file/folder breakdown `.md` (`context/repos/<repo>.md`, or `STRUCTURE.md`, `ARCHITECTURE.md` and similar inside the repo) is parsed, and its plain-English descriptions are attached to the files and symbols they mention. This finds `amt_str()` from "formats money amounts as currency strings" even though the code has no docstring.
+- **Repo breakdown docs:** each repo's file/folder breakdown `.md` (`context/repos/<repo>.md`, `guardian/data/<anything>-<repo>_*.md` such as the technical policy documents, or `STRUCTURE.md`, `ARCHITECTURE.md` and similar inside the repo) is parsed. In long documents only the descriptive sections are read (architecture, modules, reusable components), so security or cost sections don't turn every file into a match, and its plain-English descriptions are attached to the files and symbols they mention. This finds `amt_str()` from "formats money amounts as currency strings" even though the code has no docstring.
 - **Scoring:** each concept counts once, through its strongest field (name 3.0, breakdown 2.2, doc 1.4, path 0.9), weighted by IDF, then multiplied by:
   - *coverage*: how much of the ticket the candidate touches;
   - *name precision*: how much of its name the ticket explains, so `PetValidator` for "validate a pet" beats a class that only matches through a long docstring.
@@ -103,10 +104,11 @@ bin/guardian doctor
 
 ```bash
 conda env create -f environment.yml     # or: make env
-make check                              # ruff + 53 tests (CI runs Python 3.9 and 3.12)
+make check                              # ruff + 64 tests (CI runs Python 3.9 and 3.12)
 make demo                               # builds a sample context with git history and runs a blueprint
 make eval                               # retrieval quality on the sample set (CI gate)
 make eval-public                        # clones pinned public repos, reports the numbers above
+make eval-demo                          # same for the demo repos (locopy, datacompy)
 ```
 
 The sample context (`tests/sample_context.py`) has two repos with dated commits by several authors, a breakdown doc, and PRs in three export formats plus a broken file. The test suite checks that every helper is found **from a plain-English description**, that an unrelated ticket returns nothing, and that the blueprint fits on one screen.

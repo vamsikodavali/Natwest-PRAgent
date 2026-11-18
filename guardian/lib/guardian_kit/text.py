@@ -321,7 +321,18 @@ def expand_query(q: Query, spec: str) -> Query:
                 for t in item_stems:
                     q.terms[t] = (target, weight)
                 continue
-            # an unlinked phrase is one hint concept (its words reinforce each other)
+            if sep:
+                # "keep out=hide,mask": the ticket states this idea in words we filter
+                # out, so the alternatives become one full concept of their own.
+                target = next_id
+                q.concepts[next_id] = item_stems[0]
+                for t in item_stems:
+                    q.terms[t] = (target, LINKED_WEIGHT)
+                    for syn in synonyms(t):
+                        q.terms.setdefault(syn, (target, LINKED_WEIGHT * 0.7))
+                next_id += 1
+                continue
+            # an unlinked guess is one hint concept (its words reinforce each other)
             q.concepts[next_id] = item_stems[0]
             q.hints.add(next_id)
             for t in item_stems:
