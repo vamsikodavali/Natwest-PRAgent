@@ -1,4 +1,4 @@
-# PR Guardian
+# OpenHands
 
 An AI assistant that helps developers reuse what already exists and catches security, compliance and cost issues before a human reviewer has to.
 
@@ -13,7 +13,7 @@ An AI assistant that helps developers reuse what already exists and catches secu
 
 ## What it does
 
-PR Guardian reads our existing code and the history of past pull requests, and helps at two moments.
+OpenHands reads our existing code and the history of past pull requests, and helps at two moments.
 
 1. **Before work starts.** A developer gives it a ticket. It returns a blueprint: existing code to reuse, similar past pull requests, and who owns them.
 2. **When a pull request is opened.** It checks the change on four tracks and posts one review comment.
@@ -46,7 +46,7 @@ flowchart TB
 
 ## What changes for teams
 
-| Today | With PR Guardian |
+| Today | With OpenHands |
 |---|---|
 | Developers find out at review that the feature already exists | They are told before writing any code |
 | Reviewers check secrets, logging and cost by eye | Those checks arrive with the pull request |
@@ -55,7 +55,7 @@ flowchart TB
 
 ## Principles
 
-- **A human always decides.** Guardian advises. It never approves or merges.
+- **A human always decides.** OpenHands advises. It never approves or merges.
 - **Evidence or silence.** Every finding must cite a file, a past pull request or a rule ID. Findings without evidence are dropped.
 - **Same knowledge at both moments.** What it recommends before coding is what it checks at review.
 
@@ -86,7 +86,7 @@ claude -p "/pr-review <pull request URL>"
 
 1. A ticket asks for a feature that an existing helper already covers. The blueprint points to that helper.
 2. A pull request ignores it, and also contains a hardcoded credential, a customer identifier written to logs, and a costly infrastructure change.
-3. Guardian posts one comment that flags all four, each with its evidence.
+3. OpenHands posts one comment that flags all four, each with its evidence.
 
 ## Limits of the proof of concept
 
