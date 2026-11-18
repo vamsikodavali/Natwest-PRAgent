@@ -59,18 +59,20 @@ The full pass criteria are in [demo/expected-findings.md](../demo/expected-findi
 
 **Step 3: the same thing on GitHub, accepted vs blocked**
 
-Two demo pull requests implement the same ticket:
+Two draft demo PRs implement the same ticket. Both were reviewed by `/pr-review <url>`, which posted the comment:
 
-| Branch | What it does | Expected verdict |
-|---|---|---|
-| `demo/accepted-mismatch-export` | Reuses `S3.upload_to_s3` with KMS, no secrets, logs counts only, bounded query | ✅ "no issues found" (verified locally: 0 findings, 32 s, $0.39) |
-| `demo/blocked-mismatch-export` | The planted change | 3 blockers, 4 warnings |
+| PR | Implementation | Posted verdict | Review time |
+|---|---|---|---|
+| [#8 BLOCKED](https://github.com/vamsikodavali/Natwest-PRAgent/pull/8) | The planted change | 🛑 needs changes: 2 blockers (hardcoded AWS keys, customer ID and email in logs), 4 warnings (duplicate S3 uploader, `SELECT *`, per-row uploads, X4LARGE warehouse) | 61 s, $0.54 |
+| [#9 ACCEPTED](https://github.com/vamsikodavali/Natwest-PRAgent/pull/9) | Reuses `S3.upload_to_s3` with KMS, no secrets, logs counts only, bounded query, one upload | ✅ no issues found (all 4 tracks ran) | 54 s, $0.45 |
+
+To re-run, or to review any other PR (needs `gh auth login`):
 
 ```bash
-claude -p "/pr-review https://github.com/vamsikodavali/Natwest-PRAgent/pull/<N>"
+claude -p "/pr-review https://github.com/vamsikodavali/Natwest-PRAgent/pull/8"
 ```
 
-With `gh` logged in, the review is posted as a comment on the PR. Open both PRs side by side.
+Both PRs are drafts titled "DEMO (do not merge)". Never merge them.
 
 ---
 

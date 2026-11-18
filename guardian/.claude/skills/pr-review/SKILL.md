@@ -1,7 +1,7 @@
 ---
 name: pr-review
 description: Review a GitHub pull request URL on four tracks (reuse, history, security, cost) and write one evidence-backed review comment.
-allowed-tools: Bash(gh auth status), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr comment:*), Bash(curl -sL:*), Bash(./bin/guardian:*), Bash(mkdir -p out), Bash(ls:*), Bash(printenv GUARDIAN_ALERT_EMAIL), Read, Grep, Glob, Edit(./out/**)
+allowed-tools: Bash(gh auth status:*), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr comment:*), Bash(curl -sL:*), Bash(./bin/guardian:*), Bash(mkdir -p out), Bash(ls:*), Bash(printenv GUARDIAN_ALERT_EMAIL), Read, Grep, Glob, Edit(./out/**)
 ---
 
 # PR review
