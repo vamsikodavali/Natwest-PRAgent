@@ -1,0 +1,2922 @@
+[
+ {
+  "number": 297,
+  "title": "Speed up SHAP importance and calculation; sync uv.lock after #295",
+  "body": "## Description\nThis PR combines the SHAP speed-ups with a lockfile fix. Every change except the last bullet leaves results unchanged.\n\n- **SHAP importance aggregation** (from ing-bank/probatus#294): faster `calculate_shap_importance` in `probatus/utils/shap_helpers.py`.\n- **Single model parse:** `shap.Explainer`'s automatic selection parsed each tree model twice, once only to check support. Tree models are now built with shap's tree algorithm directly. Linear models are still checked first, as shap does, and other models fall back to the automatic selection.\n- **Parallel SHAP:** new `n_jobs` on `shap_calc`, `ShapModelInterpreter` and `DependencePlotter`; `SHAPImportanceResemblance` now uses its existing `n_jobs` for SHAP. The default background-sample (interventional) tree SHAP is single-threaded and holds the GIL, so rows are split across processes. Each row depends only on itself and the background sample, so values are bit-identical. The default stays `n_jobs=1`. `ShapRFECV` is unchanged here because its folds already run in parallel.\n- **Documented faster option:** `feature_perturbation=\"tree_path_dependent\"` was already accepted. Its docstrings now describe it as the faster choice for tree models and note that it gives slightly different SHAP values. It stays opt-in. A new notebook, `docs/discussion/nb_shap_feature_perturbation.ipynb`, compares both options on a LightGBM example:\n  - single SHAP calculation ~30× faster, `ShapRFECV` ~6× faster;\n  - SHAP values correlate at 0.99;\n  - the top 10 features keep their rank;\n  - feature elimination removes the same features in every round.\n- **Regenerated `uv.lock`:** upstream #295 changed `pyproject.toml` without it, so `uv run --locked` fails on main. The package set changes only by probatus 3.1.5 → 3.1.6, plus numba 0.62.1 and llvmlite 0.45.1, which apply only to Python >= 3.14 on x86_64 macOS.\n\n## Type of change\n- [x] Bug fix (non-breaking change which fixes an issue): lockfile out of sync with pyproject.toml\n- [x] New feature (non-breaking change which adds functionality): faster SHAP aggregation and calculation, `n_jobs` for SHAP\n- [x] Documentation update: docstrings and a comparison notebook\n\n## Checklist:\n- [x] My code follows the code style of this project.\n- [ ] My change requires a change to the documentation/notebooks.\n- [x] I have updated the documentation or added a notebook accordingly.\n- [x] I have tested the code locally according to the **CONTRIBUTING.md** document.\n- [x] I have added tests to cover my changes.\n- [x] All new and existing tests passed.\n\n## How Has This Been Tested?\nRun locally:\n- `uv lock --check` passes.\n- `scripts/check.py --locked` passes lint, types and docs; tests: 177 passed, 11 skipped. One more fallback test was added afterwards; it passes on its own and lints clean.\n- The new notebook was executed and saved with its outputs. It passes the pre-commit hooks (nbQA mypy, ruff) and renders in `mkdocs build`.\n\nResults unchanged:\n- The new `shap_calc` was compared against the previous commit across LightGBM, XGBoost, random forest, decision tree, CatBoost and linear models. This covered binary, multi-class and regression models, NumPy and DataFrame input, categorical data, both SHAP modes and `n_jobs` 1 and 4. All 54 combinations gave bit-identical values and expected values, or raised identical errors.\n- The full workflows below produced identical reports before and after.\n- The new tests assert that parallel and serial results match for each class, and that a tree model is parsed once.\n- Separately, the new `calculate_shap_importance` matched the old one bit-for-bit on 11,726 generated inputs. It differs only when the penalty is disabled and SHAP values are infinite or overflow; that feature now sorts first instead of last, where the old order came from a NaN sort key.\n\nTimings: 4 vCPUs, LightGBM 100 trees, best of 2 runs, with the previous commit as baseline:\n\n| Workflow | Before | After |\n|---|---|---|\n| `ShapModelInterpreter`, 7,500 train + 2,500 test rows, `n_jobs=4` | 53.2s | 15.0s (3.5×) |\n| `SHAPImportanceResemblance`, 2,500-row test set, `n_jobs=4` | 19.3s | 6.2s (3.1×) |\n| `ShapRFECV`, 5,000×100, `tree_path_dependent`, `n_jobs=1` | 60.0s | 54.1s (−10%) |\n| `ShapRFECV`, opt-in `tree_path_dependent` vs default (3,000×40) | 61s | 10s (~6×, values differ slightly) |\n\nThe first parallel call in a process is slower while joblib starts its workers.\n\n## Additional Context:\n- `tests/feature_elimination/test_feature_elimination.py::test_complex_dataset` flaked once in about 9 full runs. It is also flaky on main, so this change doesn't cause it.\n- Not addressed here: `ShapModelInterpreter` with default settings failed shap's additivity check on a plain LightGBM model during benchmarking (SHAP values summed to −3.438, model output −3.516).\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nhttps://claude.ai/code/session_01QoTfso73LJMccEoxgCwkqu",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2026-11-05T19:45:10Z",
+  "closedAt": "2026-11-05T19:45:10Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/297"
+ },
+ {
+  "number": 296,
+  "title": "feat: Add support for Python 3.14",
+  "body": "## Description\n\nAdd support for Python 3.14\n\n## Type of change\n\n- [ ] Bug fix (non-breaking change which fixes an issue)\n- [X] New feature (non-breaking change which adds functionality)\n- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)\n- [ ] Documentation update\n\n## Checklist:\n\n- [X] My code follows the code style of this project.\n- [ ] My change requires a change to the documentation/notebooks.\n- [X] I have updated the documentation or added a notebook accordingly.\n- [X] I have tested the code locally according to the **CONTRIBUTING.md** document.\n- [X] I have added tests to cover my changes.\n- [X] All new and existing tests passed.\n\n## How Has This Been Tested?\n\n```\nuv run --locked --all-extras python scripts/check.py\n```",
+  "state": "MERGED",
+  "author": {
+   "login": "khrapovs"
+  },
+  "mergedAt": "2026-11-05T21:54:40Z",
+  "closedAt": "2026-11-05T21:54:40Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed in #297 #295 . If you'd like you can adapt it to align with the latest changes of 3.2.0 and then I'll merge it.",
+    "createdAt": "2026-11-05T19:48:58Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/296"
+ },
+ {
+  "number": 295,
+  "title": "Support python versions 3.10+",
+  "body": "Versions higher than 3.13 were made difficult by the pyproject.toml change. Reverted the strictness of the toml.",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2026-11-05T14:29:05Z",
+  "closedAt": "2026-11-05T14:29:05Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/295"
+ },
+ {
+  "number": 294,
+  "title": "Speed up SHAP importance aggregation with measured benchmarks",
+  "body": "## Description\n\nSHAP importance aggregation calculated standard deviations even with the default disabled variance penalty, then built, converted, sorted, and discarded a temporary report column. Skip the unused variance calculation, construct only the public report columns, and release the full multiclass absolute-value array after reducing over classes.\n\nRepeated measurements against `d07a6b0`, using the same locked Python 3.12 environment, show:\n\n| Workload | Before | After | Speedup |\n| --- | ---: | ---: | ---: |\n| SHAP aggregation, 100 × 20 float64 | 0.319 ms | 0.194 ms | 1.64× |\n| SHAP aggregation, 20,000 × 200 float64 | 15.101 ms | 4.144 ms | 3.64× |\n| SHAP aggregation, 20,000 × 200 float32 | 5.743 ms | 2.410 ms | 2.38× |\n| Multiclass aggregation, 3 × 5,000 × 100 | 3.533 ms | 2.124 ms | 1.66× |\n| Fitted `ShapModelInterpreter.compute()` | 14.068 ms | 6.895 ms | 2.04× |\n\nPeak traced allocations for the large float64 aggregation fall from 61.1 to 30.5 MiB. Enabled binary variance penalties have essentially unchanged runtime. The complete `ShapRFECV.fit_compute()` benchmark changed from 361 to 347 ms, with overlapping timing ranges: this does **not** establish a reliable end-to-end feature-elimination speedup.\n\nThe interpreter timing covers report computation after a real model and explainer have been fitted. Benchmarks use nine calibrated timing batches, deterministic inputs, one native thread, and separate allocation measurements. This was a shared VM with scheduling noise. `docs/performance.md` records the experiments, limitations, environment, and reproduction commands; `scripts/benchmark_results/` contains raw final samples and output fingerprints. All eight benchmark report fingerprints match the baseline.\n\nRegression tests preserve exact reported values, output dtypes, pandas tie ordering, duplicate labels, multiclass reductions, enabled penalties, and read-only/strided inputs. Disabled penalties also avoid NaN sort keys caused by overflow in an unused variance calculation for large finite SHAP values.\n\n## Type of change\n\n- [x] Performance improvement (non-breaking for ordinary finite inputs)\n- [x] Documentation update\n\n## Checklist\n\n- [x] My code follows the code style of this project.\n- [x] I have updated the documentation with measurements and reproduction commands.\n- [x] I have added tests to cover my changes.\n- [x] I have tested the code locally according to CONTRIBUTING.md.\n- [x] All new and existing tests passed (default skips noted below).\n\n## How Has This Been Tested?\n\n- `uv run --locked --all-extras pytest -q tests/utils/test_shap_helpers.py`: 70 passed.\n- `scripts/check.py`: all pre-commit hooks and whole-library type checking passed.\n- `LOKY_MAX_CPU_COUNT=2 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 uv run --locked --all-extras python scripts/check.py --checks tests docs`: 163 passed, 11 skipped, 90% aggregate line/branch coverage; documentation build passed. The skips are ten opt-in notebook execution tests and one empty parametrization. Tests were rerun with CPU limits after stopping the first run during the slow LightGBM documentation example on this shared VM.\n- Run `scripts/benchmark_shap_importance.py` against the baseline worktree and the optimized checkout with `--repeats 9 --min-time 0.3`; compare raw times, peak allocations, and `result_sha256` fields.\n",
+  "state": "CLOSED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-11-05T19:47:42Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed in #297 #295 ",
+    "createdAt": "2026-11-05T19:47:42Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/294"
+ },
+ {
+  "number": 293,
+  "title": "Bump version from 3.1.4 to 3.1.5",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2026-09-08T06:24:07Z",
+  "closedAt": "2026-09-08T06:24:07Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/293"
+ },
+ {
+  "number": 292,
+  "title": "Add library typing and fix feature-elimination regressions",
+  "body": "## Description\n\nAdds type hints to every function in the probatus library, checks function bodies with mypy, and ships `py.typed` for downstream users. Shared local/CI checks now enforce whole-package typing and static public-API contracts, including flag-dependent return types. Development dependencies include pandas stubs. Estimators and explainers use structural protocols; SHAP values and CV indices use concrete floating/integer array types. SHAP/plot options and boosting-fit parameters use typed dictionaries, and the abstract interfaces use generics. Explicit `Any` annotations are removed, with a Ruff rule preventing new imports; static API tests check typed dependency signatures and reject invalid model/option values.\n\nEstimator protocols distinguish basic fitting from optional sample-weight support, including keyword-only weights. Fluent methods use `Self` to preserve subclass types. Input aliases use standard generic lists matching the accepted runtime containers, with independent element types for paired datasets, labels, weights, and groups. Independently typed estimator fixtures verify these contracts without inheriting sklearn classes.\n\n- Fixes #278 by omitting `groups` when it is `None`, while continuing to pass real group labels into hyperparameter searches. Tests exercise GridSearchCV and RandomizedSearchCV with metadata routing enabled and disabled, verify group separation in inner and outer CV, and cover early stopping.\n- Fixes #280 by retaining the whole-package coverage target already present on main, adding branch measurement and behavioral regression tests. Codecov uploads remain restricted to `main`; pull requests still collect whole-package coverage during tests. The fitted-state tests now actually invoke the guard instead of producing an unconditional xpass.\n- Fixes #274 by honoring verbosity in LightGBM's early-stopping callback and replacing the tutorial's repeated timing runs with one actual early-stopping example. Both changed tutorials are executed with their outputs committed for the online documentation, including plots, tables, and printed feature-selection results. Model verbosity suppresses training logs at their source. It also explains model verbosity and scoped warning suppression.\n- Confirms and incorporates the selection-policy bug reported in #277: coherent/parsimonious candidates must be within `best_mean - standard_error_threshold * best_std`. `best` still selects the highest mean score. Tests cover score scaling, negative scores, boundary inclusion, zero tolerance, and zero variance. The historical parameter name is retained and its standard-deviation semantics are documented.\n\nTyping also exposed small input/return-path defects: the support-mask method was incorrectly static, ranking coerced feature names to integers, NumPy SHAP inputs accessed dataframe-only attributes, and Series conversion mishandled an omitted index. These are fixed with regression coverage.\n\n## Type of change\n\n- [x] Bug fixes\n- [x] Type-checking support\n- [x] Documentation update\n\n## Validation\n\n- Shared `scripts/check.py`: lint, whole-package mypy/API contracts, complete unit suite (97 passed, 11 standard skips), and documentation build pass. Coverage is 92.1% of lines and 77.7% of branches; feature elimination is included. Native thread counts and CPU affinity were limited for local validation.\n- Python 3.10 imports and type checking pass; the normal local environment is Python 3.12. Static fixtures cover estimators without sample weights, keyword-only weights, incompatible weight types, subclass-preserving fit returns, typed list inputs, and rejected unsupported containers.\n- All 27 focused regression/helper tests pass with the minimum supported scikit-learn 1.4.2 and NumPy 1.26.4.\n- Running the relevant regressions against the original methods produces eight expected failures, demonstrating coverage of the reported defects.\n- Both changed feature-selection tutorials execute successfully (skipping only dependency installation in the already provisioned environment), with execution counts and all generated outputs saved. No LightGBM info logs are emitted. The documentation build preserves the saved plots, tables, and printed output.\n- Wheel and source archive contain `py.typed`; static API checks pass against the installed wheel in an isolated downstream environment.\n\n## Checklist\n\n- [x] Code follows project style.\n- [x] Documentation is updated.\n- [x] New behavior has regression tests.\n- [x] Local shared checks pass.\n",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2026-09-08T06:10:53Z",
+  "closedAt": "2026-09-08T06:10:53Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed. Thanks @detrin & @cleboo",
+    "createdAt": "2026-09-08T06:10:17Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/292"
+ },
+ {
+  "number": 291,
+  "title": "Bump package version to 3.1.4",
+  "body": "## Description\nThe `v3.1.4` release built packages with version `3.1.3`, causing the publishing job to attempt an upload of an existing PyPI filename. Bump the package version to `3.1.4` in `pyproject.toml` and refresh the project entry in `uv.lock` so release artifacts use the intended version. Dependency versions are unchanged.\n\n## Type of change\n- [x] Bug fix (non-breaking change which fixes an issue)\n\n## Checklist\n- [x] My code follows the code style of this project.\n- [x] I have tested the code locally according to the CONTRIBUTING.md document.\n- [x] All new and existing tests passed.\n\n## How Has This Been Tested?\n- All pre-commit lint and type checks passed.\n- `uv build --out-dir /tmp/probatus-release-3.1.4-dist` succeeded; wheel METADATA and source PKG-INFO both report version `3.1.4`.\n- `git grep -n -F '3.1.3'` found no remaining references in tracked files.\n- Tests and documentation passed on Python 3.12.3: `uv run --locked --all-extras env OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2 LOKY_MAX_CPU_COUNT=2 python scripts/check.py --checks tests docs` (69 passed, 11 skipped, 1 xpassed; 88% coverage). CPU threads were limited after the initial unrestricted run was interrupted due to slow LightGBM execution.\n",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2026-09-07T21:09:12Z",
+  "closedAt": "2026-09-07T21:09:12Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/291"
+ },
+ {
+  "number": 290,
+  "title": "Update dependencies and update Python language support",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2026-09-07T20:50:30Z",
+  "closedAt": "2026-09-07T20:50:30Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/290"
+ },
+ {
+  "number": 289,
+  "title": "Remove numba from direct dependencies",
+  "body": "Fixes #283.\n\n`numba` is not imported anywhere in probatus - it's only needed transitively through SHAP, which declares its own numba dependency. Removing it reduces install weight (numba pulls LLVM) and lowers the surface for version conflicts.\n\nFull test suite passes: 61 passed, 11 skipped, 0 failures.",
+  "state": "CLOSED",
+  "author": {
+   "login": "detrin"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-09-07T20:50:52Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thank you, fixed in #290",
+    "createdAt": "2026-09-07T20:50:52Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/289"
+ },
+ {
+  "number": 288,
+  "title": "Bump numpy version cap from <2.0.0 to <3.0.0",
+  "body": "Fixes #279.\n\nThe `numpy<2.0.0` cap makes probatus uninstallable alongside modern SHAP (>=0.50.0 requires numpy>=2). All dependencies now support numpy 2 - including CatBoost since v1.2.8.\n\nFull test suite passes on numpy 2.0.2: 61 passed, 11 skipped, 0 failures.",
+  "state": "CLOSED",
+  "author": {
+   "login": "detrin"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-09-07T20:51:07Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thank you, fixed in #290",
+    "createdAt": "2026-09-07T20:51:07Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/288"
+ },
+ {
+  "number": 287,
+  "title": "Fix CI workflow failures",
+  "body": "Fixes #281. Partially addresses #282.\n\nTwo changes:\n\n**1. Pin GitHub Actions to stable versions**\n`actions/checkout@master` and `actions/setup-python@master` no longer resolve, causing `startup_failure` on all PRs. Pinned to `@v4`/`@v5`. Also updated `codecov/codecov-action` from v1 to v4.\n\n**2. Scope mypy pre-commit hook to probatus/ only**\nmypy was scanning site-packages, failing on `match` statements in pytest internals because `python_version = \"3.9\"`. Added `files: ^probatus/` to the hook.\n\nVerified on fork: https://github.com/detrin/probatus/actions/runs/23989798509 - CI starts and passes linting. Remaining test failures are pre-existing SHAP/XGBoost incompatibility.",
+  "state": "MERGED",
+  "author": {
+   "login": "detrin"
+  },
+  "mergedAt": "2026-09-07T14:21:13Z",
+  "closedAt": "2026-09-07T14:21:13Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/287"
+ },
+ {
+  "number": 286,
+  "title": "Fix sklearn API breakage when using search models with groups",
+  "body": "Fixes #278.\n\nPR #275 added `groups=groups` to the search model's `.fit()` call (line 457). This breaks on sklearn 1.7+ where metadata routing is enabled by default - `RandomizedSearchCV.fit` and `GridSearchCV.fit` reject `groups` as an unexpected argument.\n\nThe fix reverts that call to `clone(self.model).fit(current_X, self.y)`. The `groups` parameter is only needed for the outer CV splits (lines 475/489), not for the inner hyperparameter search which runs its own internal CV.\n\nTested with sklearn 1.6.1 + metadata routing enabled manually, and all 25 feature_elimination tests pass.",
+  "state": "CLOSED",
+  "author": {
+   "login": "detrin"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-09-08T06:11:42Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Investigating how it influences backwards compatibility",
+    "createdAt": "2026-09-07T14:21:41Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed in #292 . thanks for your contribution your approach is included.",
+    "createdAt": "2026-09-08T06:11:42Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/286"
+ },
+ {
+  "number": 277,
+  "title": "fix handling of standard_error_threshold in feature selection",
+  "body": "Hi!\r\n\r\nLove the package - really useful!\r\n\r\nI noticed a bug in the `get_reduced_features_set` method of `ShapRFECV` when `best_coherent` or `best_parsimonious` is used: it does not actually take the variance of the evaluation metrics into account. Instead it uses the value of `standard_error_threshold` itself to set a lower bound for the metric when selecting the number of features to use.\r\n\r\nThis pull request fixes that.\r\n\r\nBest wishes and thanks for sharing your package!",
+  "state": "CLOSED",
+  "author": {
+   "login": "cleboo"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-09-08T06:12:22Z",
+  "comments": [
+   {
+    "author": {
+     "login": "cleboo"
+    },
+    "body": "I added another fix of the logic for \"best\" feature selection. The logic was actually the wrong way around (checking if the best value lies within the variation around the current value, instead of checking if the current value is inside the range around the best value).",
+    "createdAt": "2025-07-10T07:24:43Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed in #292 . thanks for your contribution your approach is included.",
+    "createdAt": "2026-09-08T06:12:09Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/277"
+ },
+ {
+  "number": 276,
+  "title": "3.1.3 Release",
+  "body": "Groups are fixed (https://github.com/ing-bank/probatus/pull/275) and some maintenance related fixes (https://github.com/ing-bank/probatus/pull/271 , https://github.com/ing-bank/probatus/pull/267 , https://github.com/ing-bank/probatus/pull/265)",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2025-04-19T04:09:46Z",
+  "closedAt": "2025-04-19T04:09:46Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/276"
+ },
+ {
+  "number": 275,
+  "title": "fixed group CV in hyperparameter tuning",
+  "body": "While ShapRFECV was already compatible with group cross-validation (e.g., GroupKFold, LeaveOneGroupOut), hyperparameter tuning was not; even if a group cross-validation generator is passed to the hyperparameter tuner (e.g., GridSearchCV, RandomizedSearchCV, BayesSearchCV).\r\n\r\nTo correct this, `probatus/feature_elimination/feature_elimination.py` was modified to ensure the groups argument can be defined when calling both `fit()` and `fit_compute()` from `ShapRFECV`, and is actually passed into the model's `fit()` method. The change was done such that cross-validation schemes independent from data groups still work.\r\n\r\nEnsuring groups are kept separate in training and validation data also during hyperparameter tuning is important in some applications, e.g., medical, to promote model parameters which robustly predict out-of-group samples.",
+  "state": "MERGED",
+  "author": {
+   "login": "DiFiSi"
+  },
+  "mergedAt": "2025-04-19T03:06:14Z",
+  "closedAt": "2025-04-19T03:06:14Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thanks for your important contribution 😄 ",
+    "createdAt": "2025-04-19T03:05:26Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/275"
+ },
+ {
+  "number": 273,
+  "title": "Added Type-hinting to methods + Update to Numpy v2",
+  "body": "This PR contains:\r\n\r\n- [x] Type checking for all methods (add literal checks, re-evaluate some checks, similar methods have similar expected inputs and outputs - for example, plot should return fig)\r\n- [x] Update the figure produced by running SHAPRFECV (it is a discrete variable - not continuous). \r\n- [x] Added some missing default parameters to functions (that were now passed via kwargs, i.e. groups for fit_compute)\r\n- [ ] Added more comments & docstring to better explain what is going on. (TODO: Re-evaluate all docstrings before merging the PR)\r\n- [x] Updated the shap calculation function. Now better supports multiclassification, with aggregation, weighing and class selection options.\r\n- [x] Added TQDM progress bar + manage better the extensive logging of some other libraries. Integrate that better (+ fix: https://github.com/ing-bank/probatus/issues/274).\r\n- [ ] Made the unit tests more robust (remove some, updating others, added some, specific for classes - catboost, lgbm, xgboost, regression, classification, random forest, others, cv, multiclass, ...) (TODO: Merge fixtures which are similar, Make sure all fixtures are in conftest.py, merge tests which have overlapping functionalities that are tested, reduce the number of tests, reassess added assertions if they can be removed or merged, re-introduce tests from the old Probatus that test for specific bugs and edge cases that make sense to test) \r\n- [x] Update to Numpy 2+ & Shap latest (and other package updates)\r\n- [ ] Backwards compatibility for Numpy 1.*\r\n- [ ] Update docs, notebooks: add examples of multiclass + regression (and fix: https://github.com/ing-bank/probatus/issues/274), other functionalities like different multiclass options, overview of the new plots, examples of legacy imports & newer imports, intricacies of the sample size; effect on speed and additivity check, notebook/doc on the changes in this new version\r\n- [x] Use newer plots from SHAP (replace summary_plot by bar plot), add consistent styling to plots that look (more) modern\r\n- [x] Integrate the use of Pipelines\r\n- [ ] Update readme to include all the latest changes\r\n- [ ] Remove deprecations, old dead code and try to fix warnings that can be fixed\r\n\r\n\r\n@PaulZhutovsky ",
+  "state": "CLOSED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-04-04T20:23:59Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "At the moment catboost does not work. This will be fixed in the newer version of Probatus. Expect catboost to update to numpy v2 any day.",
+    "createdAt": "2025-03-15T21:03:02Z"
+   },
+   {
+    "author": {
+     "login": "detrin"
+    },
+    "body": "Splendid. I am looking forward to the new release. I was actually investigating today what is the reason this package doesn't use `numpy>=2.0.0`. Glad to see that being bumped. ",
+    "createdAt": "2025-03-16T16:30:11Z"
+   },
+   {
+    "author": {
+     "login": "detrin"
+    },
+    "body": "Btw I am not sure which dependency manager do you use. For the debugging of the versions I strongly recommend to use locally poetry a d optionally with pipdeptree (dependency tree from poetry is not that great imo). You can look directly poetry.lock and then slowly upgrade od downgrade dependencies and transient dependencies untill tests are passing.",
+    "createdAt": "2025-03-17T06:43:49Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@detrin , thanks I've just been using conda. I was afraid if I'd introduce poetry it would increase the dependencies required to contribute to this repo. But it might be that that's not an issue?",
+    "createdAt": "2025-03-17T21:00:04Z"
+   },
+   {
+    "author": {
+     "login": "detrin"
+    },
+    "body": "If you have a spare time I would definitely give it a try. I normally use uv, but for debugging of dependencies, poetry is more suitable.",
+    "createdAt": "2025-03-17T21:48:31Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Still waiting for the catboost release. can be any moment it seems. In the meantime performing some refactoring (making wrapper classes for estimators, datasets and shap to simplify the implementation and detangle logic)",
+    "createdAt": "2025-04-04T08:35:49Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Started making separate plotting classes. This will allow standardization (style, output) of plots among the main classes (rfe, resemblance, interpretability) and also extend the possible plots that can be plotted from each of those classes",
+    "createdAt": "2025-04-08T16:56:22Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/273"
+ },
+ {
+  "number": 271,
+  "title": "Fix the Ruff-required formatting",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2025-02-09T07:10:45Z",
+  "closedAt": "2025-02-09T07:10:45Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/271"
+ },
+ {
+  "number": 269,
+  "title": "Update numpy requirement from <2.0.0,>=1.23.2 to >=1.23.2,<3.0.0",
+  "body": "Updates the requirements on [numpy](https://github.com/numpy/numpy) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/numpy/numpy/releases\">numpy's releases</a>.</em></p>\n<blockquote>\n<h2>2.1.0 (Aug 18, 2024)</h2>\n<h1>NumPy 2.1.0 Release Notes</h1>\n<p>NumPy 2.1.0 provides support for the upcoming Python 3.13 release and\ndrops support for Python 3.9. In addition to the usual bug fixes and\nupdated Python support, it helps get us back into our usual release\ncycle after the extended development of 2.0. The highlights for this\nrelease are:</p>\n<ul>\n<li>Support for the array-api 2023.12 standard.</li>\n<li>Support for Python 3.13.</li>\n<li>Preliminary support for free threaded Python 3.13.</li>\n</ul>\n<p>Python versions 3.10-3.13 are supported in this release.</p>\n<h2>New functions</h2>\n<h3>New function <code>numpy.unstack</code></h3>\n<p>A new function <code>np.unstack(array, axis=...)</code> was added, which splits an\narray into a tuple of arrays along an axis. It serves as the inverse of\n[numpy.stack]{.title-ref}.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26579\">gh-26579</a>)</p>\n<h2>Deprecations</h2>\n<ul>\n<li>\n<p>The <code>fix_imports</code> keyword argument in <code>numpy.save</code> is deprecated.\nSince NumPy 1.17, <code>numpy.save</code> uses a pickle protocol that no longer\nsupports Python 2, and ignored <code>fix_imports</code> keyword. This keyword\nis kept only for backward compatibility. It is now deprecated.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26452\">gh-26452</a>)</p>\n</li>\n<li>\n<p>Passing non-integer inputs as the first argument of\n[bincount]{.title-ref} is now deprecated, because such inputs are\nsilently cast to integers with no warning about loss of precision.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/27076\">gh-27076</a>)</p>\n</li>\n</ul>\n<h2>Expired deprecations</h2>\n<ul>\n<li>\n<p>Scalars and 0D arrays are disallowed for <code>numpy.nonzero</code> and\n<code>numpy.ndarray.nonzero</code>.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26268\">gh-26268</a>)</p>\n</li>\n<li>\n<p><code>set_string_function</code> internal function was removed and\n<code>PyArray_SetStringFunction</code> was stubbed out.</p>\n</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/numpy/numpy/commit/2f7fe64b8b6d7591dd208942f1cc74473d5db4cb\"><code>2f7fe64</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27236\">#27236</a> from charris/prepare-2.1.0</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/b6f434f852e9d1ed4f7de9a3a465b38171d54a61\"><code>b6f434f</code></a> REL: Prepare for the NumPy 2.1.0 release [wheel build]</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/3cf93948797fb81fc251c26cb90d6c44f8374c54\"><code>3cf9394</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27234\">#27234</a> from charris/backport-25984</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/7443dcc915fea1e905f354da511e9e60da82e19c\"><code>7443dcc</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27233\">#27233</a> from charris/backport-27223</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/85b1cab2ad5f418cca485042478622ce13a497a7\"><code>85b1cab</code></a> BUG: Allow fitting of degree zero polynomials with Polynomial.fit</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/395a81dee5be52b2acff817e6f16652d23181fc3\"><code>395a81d</code></a> DOC: reword discussion about shared arrays to hopefully be clearer</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/5af2e965a02137cd05706d8d395d8263f395f7c7\"><code>5af2e96</code></a> Move NUMUSERTYPES thread safety discussion to legacy DType API docs</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/d902c24b684e8ba5370a160a375beaa77bae5032\"><code>d902c24</code></a> DOC: add docs on thread safety in NumPy</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/c080180fabc1f8fcde14c27e3df2de8fcbe7cf03\"><code>c080180</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27229\">#27229</a> from charris/backport-27226</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/44ce7e8f7b43c1045ad78eecaac0435fff491fae\"><code>44ce7e8</code></a> BUG: Fix <code>PyArray_ZeroContiguousBuffer</code> (resize) with struct dtypes</li>\n<li>Additional commits viewable in <a href=\"https://github.com/numpy/numpy/compare/v1.23.2...v2.1.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n<details>\n<summary>Most Recent Ignore Conditions Applied to This Pull Request</summary>\n\n| Dependency Name | Ignore Conditions |\n| --- | --- |\n| numpy | [>= 2.0.a, < 2.1] |\n</details>\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-09-07T14:23:24Z",
+  "comments": [
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2026-09-07T14:23:27Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/269"
+ },
+ {
+  "number": 267,
+  "title": "Update index.md",
+  "body": "small version update fix",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-08-17T23:41:25Z",
+  "closedAt": "2024-08-17T23:41:25Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/267"
+ },
+ {
+  "number": 265,
+  "title": "Weekly cronjob no longer tests notebooks (for now)",
+  "body": "As of right now, our unit tests for notebooks are unreliable and as a result we get false positives. Therefore it is proposed to disable it for now until we have a better solution how to fix the notebook tests (which are a bit more extensive examples than normal unit test).",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-08-17T23:40:33Z",
+  "closedAt": "2024-08-17T23:40:33Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/265"
+ },
+ {
+  "number": 264,
+  "title": "Update numpy requirement from <2.0.0,>=1.23.2 to >=2.0.0,<3.0.0",
+  "body": "Updates the requirements on [numpy](https://github.com/numpy/numpy) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/numpy/numpy/releases\">numpy's releases</a>.</em></p>\n<blockquote>\n<h2>v2.0.0</h2>\n<h1>NumPy 2.0.0 Release Notes</h1>\n<p>NumPy 2.0.0 is the first major release since 2006. It is the result of\n11 months of development since the last feature release and is the work\nof 212 contributors spread over 1078 pull requests. It contains a large\nnumber of exciting new features as well as changes to both the Python\nand C APIs.</p>\n<p>This major release includes breaking changes that could not happen in a\nregular minor (feature) release - including an ABI break, changes to\ntype promotion rules, and API changes which may not have been emitting\ndeprecation warnings in 1.26.x. Key documents related to how to adapt to\nchanges in NumPy 2.0, in addition to these release notes, include:</p>\n<ul>\n<li>The <a href=\"https://numpy.org/devdocs/numpy_2_0_migration_guide.html\">numpy-2-migration-guide</a></li>\n<li>The Numpy 2.0-specific advice in <a href=\"https://numpy.org/devdocs/dev/depending_on_numpy.html\">for downstream package authors</a></li>\n</ul>\n<h2>Highlights</h2>\n<p>Highlights of this release include:</p>\n<ul>\n<li>New features:\n<ul>\n<li>A new variable-length string dtype, <code>numpy.dtypes.StringDType</code> and a new\n<code>numpy.strings</code> namespace with performant ufuncs for string operations,</li>\n<li>Support for <code>float32</code> and <code>longdouble</code> in all\n<code>numpy.fft</code> functions,</li>\n<li>Support for the array API standard in the main <code>numpy</code>\nnamespace.</li>\n</ul>\n</li>\n<li>Performance improvements:\n<ul>\n<li>Sorting functions <code>sort</code>, <code>argsort</code>,\n<code>partition</code>, <code>argpartition</code> have been\naccelerated through the use of the Intel x86-simd-sort and\nGoogle Highway libraries, and may see large (hardware-specific)\nspeedups,</li>\n<li>macOS Accelerate support and binary wheels for macOS &gt;=14, with\nsignificant performance improvements for linear algebra\noperations on macOS, and wheels that are about 3 times smaller,</li>\n<li><code>numpy.char</code> fixed-length string operations have\nbeen accelerated by implementing ufuncs that also support\n<code>numpy.dtypes.StringDType</code> in addition to the\nfixed-length string dtypes,</li>\n<li>A new tracing and introspection API,\n<code>numpy.lib.introspect.opt_func_info</code>, to determine\nwhich hardware-specific kernels are available and will be\ndispatched to.</li>\n<li><code>numpy.save</code> now uses pickle protocol version 4 for saving\narrays with object dtype, which allows for pickle objects larger\nthan 4GB and improves saving speed by about 5% for large arrays.</li>\n</ul>\n</li>\n<li>Python API improvements:</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/numpy/numpy/commit/1d49c7f7ff527c696fc26ab2278ad51632a66660\"><code>1d49c7f</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26698\">#26698</a> from charris/prepare-2.0.0</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/2103511c0fa1b336f38d43920e3eb5440af9ea15\"><code>2103511</code></a> DOC: Remove duplicate in author list.</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/db8030e9bb082466f89714c9a97c87f99dabb60d\"><code>db8030e</code></a> BUG: Change cibuildwheel version [wheel build]</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/1a68264bb5f6859fc85c985984fc682034320503\"><code>1a68264</code></a> REL: Prepare for the NumPy 2.0.0 release [wheel build]</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/c8665baa495d13e40eee0d39db841b0cbfde04a1\"><code>c8665ba</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26696\">#26696</a> from charris/backport-26582</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/103f4dd40725bcf610b3ff19a324e1ca099a47c4\"><code>103f4dd</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26697\">#26697</a> from charris/backport-25963</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/c193dcd1dcd01989088475349e1b717d2b82b07b\"><code>c193dcd</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26695\">#26695</a> from charris/backport-26667</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/8fa81913477d19c78b5f8660830615b31a95a7de\"><code>8fa8191</code></a> BUG: Fix bug in numpy.pad() (<a href=\"https://redirect.github.com/numpy/numpy/issues/25963\">#25963</a>)</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/ece3559d4c0b9fc22c2d272d07cef1d62b4b65b2\"><code>ece3559</code></a> BUG: weighted nanpercentile, nanquantile and  multi-dim q (<a href=\"https://redirect.github.com/numpy/numpy/issues/26582\">#26582</a>)</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/b31e19550fbb374efc6246e2f114124eee6a3714\"><code>b31e195</code></a> BUG: Adds asanyarray to start of linalg.cross (<a href=\"https://redirect.github.com/numpy/numpy/issues/26667\">#26667</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/numpy/numpy/compare/v1.23.2...v2.0.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-07-20T09:41:45Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Waiting for Numpy changes or other libraries to update their compatibility before switching to version 2+ for numpy.",
+    "createdAt": "2024-07-20T09:41:45Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2024-07-20T09:41:47Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@dependabot ignore this minor version",
+    "createdAt": "2024-07-20T10:10:40Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you about version 2.0.x again, unless you re-open this PR.",
+    "createdAt": "2024-07-20T10:10:43Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/264"
+ },
+ {
+  "number": 263,
+  "title": "Merge early stopping with shaprfecv main class",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-07-20T10:04:19Z",
+  "closedAt": "2024-07-20T10:04:19Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This PR partially fixes issues mentioned in https://github.com/ing-bank/probatus/issues/229 but also simplifies using Probatus.",
+    "createdAt": "2024-07-07T14:19:54Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@PaulZhutovsky or @adri0  could you perhaps review?",
+    "createdAt": "2024-07-07T14:34:14Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Would be nice to warn the user if they provide early_stopping_rounds, but not eval_metric (and vice-versa), that early stopping won't be used.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2024-07-13T16:07:22Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "[`warnings.warn`](https://docs.python.org/3/library/warnings.html#warnings.warn) allows you to provide a Warning class. It could be nice adding a `DeprecationWarning` here, so users could filter them if they wish :)",
+    "path": "probatus/feature_elimination/early_stopping_feature_elimination.py",
+    "createdAt": "2024-07-13T16:17:53Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Shall we leave at least 1 test with the previous class, just to make sure it doesn't get broken before it's actually removed? ",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2024-07-13T16:20:05Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "agreed, thanks, great addition",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2024-07-20T09:29:47Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/263"
+ },
+ {
+  "number": 262,
+  "title": "Bump shap from 0.43.0 to 0.46.0",
+  "body": "Bumps [shap](https://github.com/shap/shap) from 0.43.0 to 0.46.0.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/shap/shap/releases\">shap's releases</a>.</em></p>\n<blockquote>\n<h2>v0.46.0</h2>\n<h2>What's Changed</h2>\n<p>This release adds compatibility with recent version of numpy and tensorflow, and includes several bug fixes.</p>\n<h3>Added</h3>\n<ul>\n<li>Added support for numpy 2, by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3717\">shap/shap#3717</a> and <a href=\"https://github.com/paulbkoch\"><code>@​paulbkoch</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3704\">shap/shap#3704</a></li>\n<li>Added support for keras 3 and tensorflow 2.16 by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3677\">shap/shap#3677</a></li>\n</ul>\n<h3>Changed</h3>\n<ul>\n<li>Removed the deprecated <code>auto_size_plot</code> parameter to <code>shap.summary_plot()</code>.</li>\n</ul>\n<h3>Fixed</h3>\n<ul>\n<li>Fixed issue explaining models trained with <code>float16</code> mixed precision by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3652\">shap/shap#3652</a></li>\n<li>Fixed deserialization bug with <code>XGBRegressor</code> models by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3669\">shap/shap#3669</a></li>\n</ul>\n<p>Plus several further documentation and code quality improvements.</p>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/LetiP\"><code>@​LetiP</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3685\">shap/shap#3685</a></li>\n<li><a href=\"https://github.com/paulbkoch\"><code>@​paulbkoch</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3704\">shap/shap#3704</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a href=\"https://github.com/shap/shap/compare/v0.45.1...v0.46.0\">https://github.com/shap/shap/compare/v0.45.1...v0.46.0</a></p>\n<h2>v0.45.1</h2>\n<p>This is a patch release with a couple of bug fixes. In particular, fixes a bug relating to loading of XGBoost models with exponential losses.</p>\n<h2>What's Changed</h2>\n<h3>Added</h3>\n<ul>\n<li>Added selu activation for pytorch deep explainer by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3617\">shap/shap#3617</a></li>\n<li>Added &quot;ax&quot; option to heatmap plotting function by <a href=\"https://github.com/sroener\"><code>@​sroener</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3571\">shap/shap#3571</a></li>\n</ul>\n<h3>Changed</h3>\n<ul>\n<li>Removed unused &quot;display&quot; parameters from dataset functions by <a href=\"https://github.com/LakshmanKishore\"><code>@​LakshmanKishore</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3543\">shap/shap#3543</a></li>\n</ul>\n<h3>Fixed</h3>\n<ul>\n<li>Fixed loading of XGBoost models with expeonential lossesby <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3616\">shap/shap#3616</a></li>\n<li>Fixed call interface for the deep explainer by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3558\">shap/shap#3558</a></li>\n<li>Fixed use of Falcon language model for text generation by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3592\">shap/shap#3592</a></li>\n<li>Fixed lightgbm compilation (macOS Workflow) by <a href=\"https://github.com/bewygs\"><code>@​bewygs</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3632\">shap/shap#3632</a></li>\n<li>Fixed loading of XGBoost models with exponential losses by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3616\">shap/shap#3616</a></li>\n</ul>\n<p>Plus several documentation and maintenance updates by <a href=\"https://github.com/bewygs\"><code>@​bewygs</code></a> , <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> , <a href=\"https://github.com/Hugh-OBrien\"><code>@​Hugh-OBrien</code></a></p>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/sroener\"><code>@​sroener</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3571\">shap/shap#3571</a></li>\n<li><a href=\"https://github.com/Hugh-OBrien\"><code>@​Hugh-OBrien</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3604\">shap/shap#3604</a></li>\n<li><a href=\"https://github.com/bewygs\"><code>@​bewygs</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3632\">shap/shap#3632</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a href=\"https://github.com/shap/shap/compare/v0.45.0...v0.45.1\">https://github.com/shap/shap/compare/v0.45.0...v0.45.1</a></p>\n<h2>v0.45.0</h2>\n<p>This is a fairly significant release containing a number of breaking changes.</p>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/shap/shap/commit/9d6031f59fca036cea679f5d3099e5ded9d615d5\"><code>9d6031f</code></a> MAINT: Bump GH action versions (<a href=\"https://redirect.github.com/shap/shap/issues/3718\">#3718</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/6567c8e76238628a5989269422a0647336a1b9d3\"><code>6567c8e</code></a> Remove deprecated parameter auto_size_plot (<a href=\"https://redirect.github.com/shap/shap/issues/3717\">#3717</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/8c4f936e2e4085dc03438c771e83b8ac5d87d0dc\"><code>8c4f936</code></a> ENH: Add support for numpy 2, and test against numpy 1.X and 2.X (<a href=\"https://redirect.github.com/shap/shap/issues/3712\">#3712</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/b94ef689c7375c651871c9b8ac759349ccf75bf6\"><code>b94ef68</code></a> Add dev docs on SPEC 0 (<a href=\"https://redirect.github.com/shap/shap/issues/3714\">#3714</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/07b1e13f2ede9a1b1e34b99cd8a9092176b6ae4e\"><code>07b1e13</code></a> build(deps-dev): bump ws from 8.16.0 to 8.17.1 in /javascript (<a href=\"https://redirect.github.com/shap/shap/issues/3701\">#3701</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/9df0d547101811f444f0226a95dbb655dc5e7133\"><code>9df0d54</code></a> MAINT: Add numpy compatibility linter rule (<a href=\"https://redirect.github.com/shap/shap/issues/3711\">#3711</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/847a009503fd8a60f880bed6f5116960d191c4f7\"><code>847a009</code></a> Bump test-core to use python 312 (<a href=\"https://redirect.github.com/shap/shap/issues/3713\">#3713</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/07aaaab5dafe9566f689225180024d502ee0c687\"><code>07aaaab</code></a> resolve deprecated obj2sctype in numpy 2.0 (<a href=\"https://redirect.github.com/shap/shap/issues/3704\">#3704</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/f9444838af570eaff36e0f6b086b599e7e3345e7\"><code>f944483</code></a> MAINT: pin numpy to version below 2 (<a href=\"https://redirect.github.com/shap/shap/issues/3708\">#3708</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/a850c4c20e7babce8573f2394af23b8534a9a871\"><code>a850c4c</code></a> build(deps-dev): bump braces from 3.0.2 to 3.0.3 in /javascript (<a href=\"https://redirect.github.com/shap/shap/issues/3687\">#3687</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/shap/shap/compare/v0.43.0...v0.46.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=shap&package-manager=pip&previous-version=0.43.0&new-version=0.46.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-07-04T20:56:35Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Merge with master after #261 is merged before approving & squashing it",
+    "createdAt": "2024-07-04T20:31:05Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed by Paul's PR",
+    "createdAt": "2024-07-04T20:56:35Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2024-07-04T20:56:37Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/262"
+ },
+ {
+  "number": 261,
+  "title": "Fixes the use of eval_metric in case of EarlyStoppingShapRFECV with LightGBM",
+  "body": "This fixes issue #259 in the exact way described in the issue. \r\n\r\nIt indeed removes the warning and uses the defined `eval_metric` in case of LightGBM. I have no idea how to \"formally\" test that. @ReinierKoops  please advice.",
+  "state": "MERGED",
+  "author": {
+   "login": "PaulZhutovsky"
+  },
+  "mergedAt": "2024-07-04T20:53:20Z",
+  "closedAt": "2024-07-04T20:53:20Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Hi @PaulZhutovsky, thanks for the fix! This https://github.com/microsoft/LightGBM/issues/6035 provides an opportunity for us to fix the automated checks. I'll review the code.",
+    "createdAt": "2024-06-07T20:56:06Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@PaulZhutovsky ~the runner is fixed. It now seems related to the implementation changes.~",
+    "createdAt": "2024-07-04T20:16:36Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@PaulZhutovsky thanks for the contribution!",
+    "createdAt": "2024-07-04T20:53:33Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/261"
+ },
+ {
+  "number": 260,
+  "title": "Bump shap from 0.43.0 to 0.45.1",
+  "body": "Bumps [shap](https://github.com/shap/shap) from 0.43.0 to 0.45.1.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/shap/shap/releases\">shap's releases</a>.</em></p>\n<blockquote>\n<h2>v0.45.1</h2>\n<p>This is a patch release with a couple of bug fixes. In particular, fixes a bug relating to loading of XGBoost models with exponential losses.</p>\n<h2>What's Changed</h2>\n<h3>Added</h3>\n<ul>\n<li>Added selu activation for pytorch deep explainer by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3617\">shap/shap#3617</a></li>\n<li>Added &quot;ax&quot; option to heatmap plotting function by <a href=\"https://github.com/sroener\"><code>@​sroener</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3571\">shap/shap#3571</a></li>\n</ul>\n<h3>Changed</h3>\n<ul>\n<li>Removed unused &quot;display&quot; parameters from dataset functions by <a href=\"https://github.com/LakshmanKishore\"><code>@​LakshmanKishore</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3543\">shap/shap#3543</a></li>\n</ul>\n<h3>Fixed</h3>\n<ul>\n<li>Fixed loading of XGBoost models with expeonential lossesby <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3616\">shap/shap#3616</a></li>\n<li>Fixed call interface for the deep explainer by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3558\">shap/shap#3558</a></li>\n<li>Fixed use of Falcon language model for text generation by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3592\">shap/shap#3592</a></li>\n<li>Fixed lightgbm compilation (macOS Workflow) by <a href=\"https://github.com/bewygs\"><code>@​bewygs</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3632\">shap/shap#3632</a></li>\n<li>Fixed loading of XGBoost models with exponential losses by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3616\">shap/shap#3616</a></li>\n</ul>\n<p>Plus several documentation and maintenance updates by <a href=\"https://github.com/bewygs\"><code>@​bewygs</code></a> , <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> , <a href=\"https://github.com/Hugh-OBrien\"><code>@​Hugh-OBrien</code></a></p>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/sroener\"><code>@​sroener</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3571\">shap/shap#3571</a></li>\n<li><a href=\"https://github.com/Hugh-OBrien\"><code>@​Hugh-OBrien</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3604\">shap/shap#3604</a></li>\n<li><a href=\"https://github.com/bewygs\"><code>@​bewygs</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3632\">shap/shap#3632</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a href=\"https://github.com/shap/shap/compare/v0.45.0...v0.45.1\">https://github.com/shap/shap/compare/v0.45.0...v0.45.1</a></p>\n<h2>v0.45.0</h2>\n<p>This is a fairly significant release containing a number of breaking changes.</p>\n<p>Thank you to a number of new contributors for their contributions to this release! We are eager to grow the pool of maintainers, so please do get in touch on <a href=\"https://redirect.github.com/shap/shap/issues/3559\">#3559</a> if you are interested in being part of the team.</p>\n<h2>What's Changed</h2>\n<h3>Breaking changes</h3>\n<ul>\n<li>Dropped support for 3.8 in <a href=\"https://redirect.github.com/shap/shap/pull/3414\">shap/shap#3414</a></li>\n<li>Changed type and shape of returned SHAP values in some cases, to be consistent with model outputs. SHAP values for models with multiple outputs are now np.ndarray rather than list, by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3318\">shap/shap#3318</a></li>\n<li>Removed deprecated <code>feature_dependence</code> parameters in TreeExplainer and LinearExplainer by <a href=\"https://github.com/thatlittleboy\"><code>@​thatlittleboy</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3340\">shap/shap#3340</a></li>\n<li>Removed deprecated alias for Coefficient by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3511\">shap/shap#3511</a></li>\n</ul>\n<h3>Added</h3>\n<ul>\n<li>Added support for python 3.12 by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3414\">shap/shap#3414</a></li>\n<li>Added support for GPU build on recent CUDA versions by <a href=\"https://github.com/trivialfis\"><code>@​trivialfis</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3462\">shap/shap#3462</a></li>\n<li>2x import time speedup via lazy importing of pytorch by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3533\">shap/shap#3533</a></li>\n<li>Added support returning the matplotlib figure in bar plots by <a href=\"https://github.com/richarddli\"><code>@​richarddli</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3494\">shap/shap#3494</a></li>\n<li>Added selu activation for tensorflow deep explainer by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3504\">shap/shap#3504</a></li>\n<li>Added support for special characters in catboost models by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3506\">shap/shap#3506</a></li>\n<li>Added ability to control marker size in <code>beeswarm</code> plots by <a href=\"https://github.com/MonoHue\"><code>@​MonoHue</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3530\">shap/shap#3530</a></li>\n</ul>\n<h3>Fixed</h3>\n<ul>\n<li>Fixed XGBoost model load by <a href=\"https://github.com/trivialfis\"><code>@​trivialfis</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3462\">shap/shap#3462</a></li>\n<li>Fixed text masking with certain tokenizers by <a href=\"https://github.com/costrau\"><code>@​costrau</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3536\">shap/shap#3536</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/shap/shap/commit/86d8bc58a42e9e11901ad506f5c27f55fa4f0349\"><code>86d8bc5</code></a> build(deps): bump the js-minor group in /javascript with 5 updates (<a href=\"https://redirect.github.com/shap/shap/issues/3635\">#3635</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/cd4b3ab28817672a4b472b96697f7207a4a6a928\"><code>cd4b3ab</code></a> add selu activation for pytorch deep explainer (<a href=\"https://redirect.github.com/shap/shap/issues/3617\">#3617</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/e2a4a47dec15fbb2a0cb5aa693e5501117da3e09\"><code>e2a4a47</code></a> Fix missing <code>base_score</code> in xgboost regression (<a href=\"https://redirect.github.com/shap/shap/issues/3616\">#3616</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/389261994a43526b5daf7e0b44ff189e46d7a62b\"><code>3892619</code></a> Correct data type in docstring for max_display in waterfall plot (<a href=\"https://redirect.github.com/shap/shap/issues/3627\">#3627</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/6f5ffd578f94ed0ee7fa150c79e506117f7e5931\"><code>6f5ffd5</code></a> FIX : Add libomp for lightgbm Compilation (macOS Workflow) (<a href=\"https://redirect.github.com/shap/shap/issues/3632\">#3632</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/7479ce080d5939a4101a458b1d0303ab3e7c966e\"><code>7479ce0</code></a> Convert input dataframe to 2D array to avoid feature name warning from pyod m...</li>\n<li><a href=\"https://github.com/shap/shap/commit/5f9a824b0457881ebde050f82d2acd80e4f6e40f\"><code>5f9a824</code></a> seperate mistralai tests and let them xfail (<a href=\"https://redirect.github.com/shap/shap/issues/3620\">#3620</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/dffc346f323ff8cf55f39f71c613ebd00e1c88f8\"><code>dffc346</code></a> Update slicer pin to 0.0.8 and add test (<a href=\"https://redirect.github.com/shap/shap/issues/3560\">#3560</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/bbbe821a7c935c7a15b22cd09ff094d6ad113ddd\"><code>bbbe821</code></a> Fix use of Falcon language model for text generation (<a href=\"https://redirect.github.com/shap/shap/issues/3592\">#3592</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/87a6cf3d43c531b3ab8ab405f093f0e1e5abada3\"><code>87a6cf3</code></a> ENH: Add ax option to heatmap plotting function (<a href=\"https://redirect.github.com/shap/shap/issues/3571\">#3571</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/shap/shap/compare/v0.43.0...v0.45.1\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=shap&package-manager=pip&previous-version=0.43.0&new-version=0.45.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-07-01T11:48:05Z",
+  "comments": [
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "Superseded by #262.",
+    "createdAt": "2024-07-01T11:48:05Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/260"
+ },
+ {
+  "number": 257,
+  "title": "Update catboost requirement from <1.2 to <1.3",
+  "body": "\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-04-01T14:30:24Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Can be ignored since its related to py 3.8 specific behavior.",
+    "createdAt": "2024-04-01T14:30:24Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2024-04-01T14:30:26Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@dependabot ignore this major version",
+    "createdAt": "2024-04-01T14:30:46Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you about version 1.x.x again, unless you re-open this PR.",
+    "createdAt": "2024-04-01T14:30:49Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/257"
+ },
+ {
+  "number": 256,
+  "title": "upgrade to SHAP 0.44.1 and xgboost>=2.0.2",
+  "body": "Upgrade SHAP packages to version 0.44.1  and XGBoost to 2.0.2 to resolve incompatibilities with our project (for Python 3.10).\r\nAfter applying changes, we have tested Probatus and found no errors.",
+  "state": "CLOSED",
+  "author": {
+   "login": "erfanian7"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-03-31T07:09:10Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thank you for your contribution. I am not certain of the necessity of changing the shap package. Also the sign is not >=. The xgboost makes sense I think",
+    "createdAt": "2024-03-29T08:39:53Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "I’d prefer shap version 0.44.0 and xgboost version 2.0.0",
+    "createdAt": "2024-03-29T08:42:02Z"
+   },
+   {
+    "author": {
+     "login": "erfanian7"
+    },
+    "body": "Thank you for your input. You are correct, so I will close it.",
+    "createdAt": "2024-03-31T07:09:07Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/256"
+ },
+ {
+  "number": 254,
+  "title": "Update catboost requirement",
+  "body": "Updates the requirements on [catboost](https://github.com/catboost/catboost) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/catboost/catboost/releases\">catboost's releases</a>.</em></p>\n<blockquote>\n<h2>1.2.3</h2>\n<h2>Python package</h2>\n<ul>\n<li>Support Python 3.12. <a href=\"https://redirect.github.com/catboost/catboost/issues/2510\">#2510</a></li>\n<li>[Performance]: Fix ineffective loops in Cython. Significant speedups (up to 3x) on dataset construction from data in C-order can be expected.</li>\n<li>[Performance]: Make features data initialization from C-order <code>numpy.ndarray</code>s with <code>float32</code> data type multithreaded. Significant speedups of 5x up to 10x (on CPUs with many cores) can be expected. <a href=\"https://redirect.github.com/catboost/catboost/issues/385\">#385</a>, <a href=\"https://redirect.github.com/catboost/catboost/issues/2542\">#2542</a></li>\n<li>Save training metrics into the model metadata. So <code>best_score_</code>, <code>evals_result_</code>, <code>best_iteration_</code> model attributes now work after model saving and loading. Can be removed by model metadata manipulation if needed. <a href=\"https://redirect.github.com/catboost/catboost/issues/1166\">#1166</a></li>\n<li>[Breaking change]. Support a separate boolean target type, now <code>Class</code> predictions for models that have been trained with boolean targets will also be boolean instead of <code>True</code>, <code>False</code> strings as before. Such models will be incompatible with the previous versions of CatBoost appliers. If you want the old behavior convert your target to <code>False</code>, <code>True</code> strings before training. <a href=\"https://redirect.github.com/catboost/catboost/issues/1954\">#1954</a></li>\n<li>Restrict <code>jupyterlab</code> version for setup to 3.x for now. Fixes <a href=\"https://redirect.github.com/catboost/catboost/issues/2530\">#2530</a></li>\n<li><code>utils.read_cd</code>: Support CD files with non-increasing column indices.</li>\n<li>Make <code>log_cout</code>, <code>log_cerr</code> specification consistent, avoid reset in recursive calls.</li>\n<li>Late-initialize default values for <code>log_cout</code>, <code>log_cerr</code>. <a href=\"https://redirect.github.com/catboost/catboost/issues/2195\">#2195</a></li>\n<li>Add missing generated metrics: <code>Cox</code>, <code>PairLogitPairwise</code>, <code>UserPerObjMetric</code>, <code>SurvivalAft</code>.</li>\n</ul>\n<h2>New features</h2>\n<ul>\n<li>Support boolean target/labels type during training in Python and Spark (in the latter case only when using <code>fit</code> with <code>Pool</code> arguments) and <code>Class</code> prediction in Python. <a href=\"https://redirect.github.com/catboost/catboost/issues/1954\">#1954</a></li>\n<li>[Spark]: Support Spark 3.5.x.</li>\n<li>[C/C++ applier]. Add functions for getting indices of features of different types to C and C++ API. <a href=\"https://redirect.github.com/catboost/catboost/issues/2568\">#2568</a>. Thanks to <a href=\"https://github.com/nimusp\"><code>@​nimusp</code></a>.</li>\n<li>[C/C++ applier]. Add staged prediction functions to C API. <a href=\"https://redirect.github.com/catboost/catboost/issues/2584\">#2584</a>. Thanks to <a href=\"https://github.com/Mb-NextTime\"><code>@​Mb-NextTime</code></a>.</li>\n<li>[JVM applier]. Add loading CatBoostModel from a byte array to API. <a href=\"https://redirect.github.com/catboost/catboost/issues/2539\">#2539</a></li>\n<li>[Linux] Support CgroupsV2 when computing default number of threads used in parallel computations. <a href=\"https://redirect.github.com/catboost/catboost/issues/2519\">#2519</a>. Thanks to <a href=\"https://github.com/elukey\"><code>@​elukey</code></a>.</li>\n<li>[CLI] Support printing <code>Auxiliary</code> columns by name in evaluation result output. <a href=\"https://redirect.github.com/catboost/catboost/issues/1659\">#1659</a></li>\n<li>Save training metrics into the model metadata. Can be removed by model metadata manipulation if needed. <a href=\"https://redirect.github.com/catboost/catboost/issues/1166\">#1166</a></li>\n</ul>\n<h2>Build &amp; testing</h2>\n<ul>\n<li>[Windows]: Use <code>clang-cl</code> compiler and tools from Visual Studio 2022 for the build without CUDA (build with CUDA still uses standard Microsoft toolchain from Visual Studio 2019).</li>\n<li>[macOS]: Pass <code>os.version</code> to <code>conan</code> host settings to ensure version consistency.</li>\n<li>[Linux aarch64]: Set <code>-mno-outline-atomics</code> for modern versions of CLang and GCC to avoid unresolved symbols linking errors. <a href=\"https://redirect.github.com/catboost/catboost/issues/2527\">#2527</a></li>\n<li>Added missing <code>CMakeLists</code> for unit tests for <code>util</code>. <a href=\"https://redirect.github.com/catboost/catboost/issues/2525\">#2525</a></li>\n</ul>\n<h2>Bugfixes</h2>\n<ul>\n<li>[Performance]: Fix performance regression that could slow down training on GPU by 50% on some datasets that had been introduced in release 1.2. Thanks to <a href=\"https://github.com/JeanPaulShapo\"><code>@​JeanPaulShapo</code></a>.</li>\n<li>[Python-package]: Fix segfault on Pool(data=None). <a href=\"https://redirect.github.com/catboost/catboost/issues/2522\">#2522</a></li>\n<li>[Python-package]: Fix Python exception in <code>Pool()</code> when <code>pairs_weight</code> is a numpy array. <a href=\"https://redirect.github.com/catboost/catboost/issues/1913\">#1913</a></li>\n<li>[Python-package]: Fix segfault and other strange errors when specifying custom logger with <code>__call__</code> method. <a href=\"https://redirect.github.com/catboost/catboost/issues/2277\">#2277</a></li>\n<li>[Python-package]: Fix returning complex params in hyperparameter search. <a href=\"https://redirect.github.com/catboost/catboost/issues/1741\">#1741</a>, <a href=\"https://redirect.github.com/catboost/catboost/issues/1833\">#1833</a></li>\n<li>[Python-package]: Fix ignored exceptions for missed metrics descriptions on startup. This has not been visible to users but has been making debugging more difficult.</li>\n<li>[Python-package]: Fix misleading <code>Targets are required for YetiRank loss function.</code> error in Cross validation. <a href=\"https://redirect.github.com/catboost/catboost/issues/2083\">#2083</a></li>\n<li>[Python-package]: Fix <code>Pool.get_label()</code> returns constant <code>True</code> for boolean labels. <a href=\"https://redirect.github.com/catboost/catboost/issues/2133\">#2133</a></li>\n<li>[Python-package]: Copying models does not lose <code>best_score_</code>, <code>evals_result_</code>, <code>best_iteration_</code> attributes values anymore. <a href=\"https://redirect.github.com/catboost/catboost/issues/1793\">#1793</a></li>\n<li>[Spark]: Fix hangs at the end of the training. <a href=\"https://redirect.github.com/catboost/catboost/issues/2151\">#2151</a></li>\n<li><code>Precision</code> metric default value in the absense of positive samples is changed to 0 and a warning is added\n(similar to the behavior of <code>scikit-learn</code> implementation). <a href=\"https://redirect.github.com/catboost/catboost/issues/2422\">#2422</a></li>\n<li>Fix ignoring embedding features</li>\n<li>Try to avoid hash collisions when computing group ids with datasets with a lot of groups (may occur in datasets with around a 10^9 samples).</li>\n<li>Fix Multiclass models export to C++ and Python code. <a href=\"https://redirect.github.com/catboost/catboost/issues/2549\">#2549</a></li>\n<li>Fix dataset_statistics mode when no <code>Target</code> data is available.</li>\n<li>Fix <code>Error: can't proceed some features</code> error on GPU. <a href=\"https://redirect.github.com/catboost/catboost/issues/1024\">#1024</a></li>\n<li>Fix <code>allow_const_label=True</code> for classification. <a href=\"https://redirect.github.com/catboost/catboost/issues/1933\">#1933</a></li>\n<li>Add checking of approx and target dimensions for <code>SurvivalAft</code> objective/metric.</li>\n<li>Fix Focal loss derivatives sign. <a href=\"https://redirect.github.com/catboost/catboost/issues/2563\">#2563</a></li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a href=\"https://github.com/catboost/catboost/blob/master/RELEASE.md\">catboost's changelog</a>.</em></p>\n<blockquote>\n<h1>Release 1.2.3</h1>\n<h2>Python package</h2>\n<ul>\n<li>Support Python 3.12. <a href=\"https://redirect.github.com/catboost/catboost/issues/2510\">#2510</a></li>\n<li>[Performance]: Fix ineffective loops in Cython. Significant speedups (up to 3x) on dataset construction from data in C-order can be expected.</li>\n<li>[Performance]: Make features data initialization from C-order <code>numpy.ndarray</code>s with <code>float32</code> data type multithreaded. Significant speedups of 5x up to 10x (on CPUs with many cores) can be expected. <a href=\"https://redirect.github.com/catboost/catboost/issues/385\">#385</a>, <a href=\"https://redirect.github.com/catboost/catboost/issues/2542\">#2542</a></li>\n<li>Save training metrics into the model metadata. So <code>best_score_</code>, <code>evals_result_</code>, <code>best_iteration_</code> model attributes now work after model saving and loading. Can be removed by model metadata manipulation if needed. <a href=\"https://redirect.github.com/catboost/catboost/issues/1166\">#1166</a></li>\n<li>[Breaking change]. Support a separate boolean target type, now <code>Class</code> predictions for models that have been trained with boolean targets will also be boolean instead of <code>True</code>, <code>False</code> strings as before. Such models will be incompatible with the previous versions of CatBoost appliers. If you want the old behavior convert your target to <code>False</code>, <code>True</code> strings before training. <a href=\"https://redirect.github.com/catboost/catboost/issues/1954\">#1954</a></li>\n<li>Restrict <code>jupyterlab</code> version for setup to 3.x for now. Fixes <a href=\"https://redirect.github.com/catboost/catboost/issues/2530\">#2530</a></li>\n<li><code>utils.read_cd</code>: Support CD files with non-increasing column indices.</li>\n<li>Make <code>log_cout</code>, <code>log_cerr</code> specification consistent, avoid reset in recursive calls.</li>\n<li>Late-initialize default values for <code>log_cout</code>, <code>log_cerr</code>. <a href=\"https://redirect.github.com/catboost/catboost/issues/2195\">#2195</a></li>\n<li>Add missing generated metrics: <code>Cox</code>, <code>PairLogitPairwise</code>, <code>UserPerObjMetric</code>, <code>SurvivalAft</code>.</li>\n</ul>\n<h2>New features</h2>\n<ul>\n<li>Support boolean target/labels type during training in Python and Spark (in the latter case only when using <code>fit</code> with <code>Pool</code> arguments) and <code>Class</code> prediction in Python. <a href=\"https://redirect.github.com/catboost/catboost/issues/1954\">#1954</a></li>\n<li>[Spark]: Support Spark 3.5.x.</li>\n<li>[C/C++ applier]. Add functions for getting indices of features of different types to C and C++ API. <a href=\"https://redirect.github.com/catboost/catboost/issues/2568\">#2568</a>. Thanks to <a href=\"https://github.com/nimusp\"><code>@​nimusp</code></a>.</li>\n<li>[C/C++ applier]. Add staged prediction functions to C API. <a href=\"https://redirect.github.com/catboost/catboost/issues/2584\">#2584</a>. Thanks to <a href=\"https://github.com/Mb-NextTime\"><code>@​Mb-NextTime</code></a>.</li>\n<li>[JVM applier]. Add loading CatBoostModel from a byte array to API. <a href=\"https://redirect.github.com/catboost/catboost/issues/2539\">#2539</a></li>\n<li>[Linux] Support CgroupsV2 when computing default number of threads used in parallel computations. <a href=\"https://redirect.github.com/catboost/catboost/issues/2519\">#2519</a>. Thanks to <a href=\"https://github.com/elukey\"><code>@​elukey</code></a>.</li>\n<li>[CLI] Support printing <code>Auxiliary</code> columns by name in evaluation result output. <a href=\"https://redirect.github.com/catboost/catboost/issues/1659\">#1659</a></li>\n<li>Save training metrics into the model metadata. Can be removed by model metadata manipulation if needed. <a href=\"https://redirect.github.com/catboost/catboost/issues/1166\">#1166</a></li>\n</ul>\n<h2>Build &amp; testing</h2>\n<ul>\n<li>[Windows]: Use <code>clang-cl</code> from Visual Studio 2022 for the build without CUDA (build with CUDA still uses standard Microsoft toolchain from Visual Studio 2019).</li>\n<li>[macOS]: Pass <code>os.version</code> to <code>conan</code> host settings to ensure version consistency.</li>\n<li>[Linux aarch64]: Set <code>-mno-outline-atomics</code> for modern versions of CLang and GCC to avoid unresolved symbols linking errors. <a href=\"https://redirect.github.com/catboost/catboost/issues/2527\">#2527</a></li>\n<li>Added missing <code>CMakeLists</code> for unit tests for <code>util</code>. <a href=\"https://redirect.github.com/catboost/catboost/issues/2525\">#2525</a></li>\n</ul>\n<h2>Bugfixes</h2>\n<ul>\n<li>[Performance]: Fix performance regression that could slow down training on GPU by 50% on some datasets that had been introduced in release 1.2. Thanks to <a href=\"https://github.com/JeanPaulShapo\"><code>@​JeanPaulShapo</code></a>.</li>\n<li>[Python-package]: Fix segfault on Pool(data=None). <a href=\"https://redirect.github.com/catboost/catboost/issues/2522\">#2522</a></li>\n<li>[Python-package]: Fix Python exception in <code>Pool()</code> when <code>pairs_weight</code> is a numpy array. <a href=\"https://redirect.github.com/catboost/catboost/issues/1913\">#1913</a></li>\n<li>[Python-package]: Fix segfault and other strange errors when specifying custom logger with <code>__call__</code> method. <a href=\"https://redirect.github.com/catboost/catboost/issues/2277\">#2277</a></li>\n<li>[Python-package]: Fix returning complex params in hyperparameter search. <a href=\"https://redirect.github.com/catboost/catboost/issues/1741\">#1741</a>, <a href=\"https://redirect.github.com/catboost/catboost/issues/1833\">#1833</a></li>\n<li>[Python-package]: Fix ignored exceptions for missed metrics descriptions on startup. This has not been visible to users but has been making debugging more difficult.</li>\n<li>[Python-package]: Fix misleading <code>Targets are required for YetiRank loss function.</code> error in Cross validation. <a href=\"https://redirect.github.com/catboost/catboost/issues/2083\">#2083</a></li>\n<li>[Python-package]: Fix <code>Pool.get_label()</code> returns constant <code>True</code> for boolean labels. <a href=\"https://redirect.github.com/catboost/catboost/issues/2133\">#2133</a></li>\n<li>[Python-package]: Copying models does not lose <code>best_score_</code>, <code>evals_result_</code>, <code>best_iteration_</code> attributes values anymore. <a href=\"https://redirect.github.com/catboost/catboost/issues/1793\">#1793</a></li>\n<li>[Spark]: Fix hangs at the end of the training. <a href=\"https://redirect.github.com/catboost/catboost/issues/2151\">#2151</a></li>\n<li><code>Precision</code> metric default value in the absense of positive samples is changed to 0 and a warning is added\n(similar to the behavior of <code>scikit-learn</code> implementation). <a href=\"https://redirect.github.com/catboost/catboost/issues/2422\">#2422</a></li>\n<li>Fix ignoring embedding features</li>\n<li>Try to avoid hash collisions when computing group ids with datasets with a lot of groups (may occur in datasets with around a 10^9 samples).</li>\n<li>Fix Multiclass models export to C++ and Python code. <a href=\"https://redirect.github.com/catboost/catboost/issues/2549\">#2549</a></li>\n<li>Fix dataset_statistics mode when no <code>Target</code> data is available.</li>\n<li>Fix <code>Error: can't proceed some features</code> error on GPU. <a href=\"https://redirect.github.com/catboost/catboost/issues/1024\">#1024</a></li>\n<li>Fix <code>allow_const_label=True</code> for classification. <a href=\"https://redirect.github.com/catboost/catboost/issues/1933\">#1933</a></li>\n<li>Add checking of approx and target dimensions for <code>SurvivalAft</code> objective/metric.</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/catboost/catboost/commit/fe0941b208f9c392ce788c314463b6816d335c6a\"><code>fe0941b</code></a> Use paths from CMAKE_*_DIR when running in open source to avoid issues on Win...</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/cf282f73707cbfaca6a8976693a317bf942d1a90\"><code>cf282f7</code></a> CatBoost release 1.2.3.</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/ec263e7d0e4ed96a39820d1cee9d8f205a0624d4\"><code>ec263e7</code></a> Update contrib/python/ipywidgets/py3 to 8.1.2</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/704a5d8ba26afdcd4fd28842dcdd7541b176531e\"><code>704a5d8</code></a> Intermediate changes</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/a13b5ba1b650cf68e6129a165d3fa144642bc132\"><code>a13b5ba</code></a> Add loading  CatBoostModel from a byte array to API.. Fix <a href=\"https://redirect.github.com/catboost/catboost/issues/2539\">#2539</a></li>\n<li><a href=\"https://github.com/catboost/catboost/commit/56a0b44e8529920def3db9f5a13204bdb8c37cbe\"><code>56a0b44</code></a> Add Get*FeaturesIndices to C++ wrapper. <a href=\"https://redirect.github.com/catboost/catboost/issues/2323\">#2323</a>, <a href=\"https://redirect.github.com/catboost/catboost/issues/2568\">#2568</a></li>\n<li><a href=\"https://github.com/catboost/catboost/commit/caed72b46db0f4de9cb92b4e12195e683579ce36\"><code>caed72b</code></a> Add GetEmbeddingFeaturesCount() to C++ wrapper</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/4490314cac96e0aacb0925483042db6287b091f4\"><code>4490314</code></a> Add Spark 3.5 to pyspark_wrapper_generator.</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/98c36676fed9e44892b5f228166694b2f71e1cec\"><code>98c3667</code></a> Support boolean target type in Spark (where possible).</li>\n<li><a href=\"https://github.com/catboost/catboost/commit/ad980dac979d2d8b4d633dffab06cb2e7303c126\"><code>ad980da</code></a> Manually unroll the loop</li>\n<li>Additional commits viewable in <a href=\"https://github.com/catboost/catboost/compare/v1.1...v1.2.3\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "MERGED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": "2024-03-28T05:27:53Z",
+  "closedAt": "2024-03-28T05:27:53Z",
+  "comments": [
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Indeed this is extra dependency option with all packages seems not very useful. But in the future it could be nice having one optional dependency for each algorithm. If the user is just interested in using probatus with lightgbm without having to install the others sounds like a fair use case. ",
+    "path": "pyproject.toml",
+    "createdAt": "2024-03-27T21:20:10Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/254"
+ },
+ {
+  "number": 253,
+  "title": "Bump shap from 0.43.0 to 0.45.0",
+  "body": "Bumps [shap](https://github.com/shap/shap) from 0.43.0 to 0.45.0.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/shap/shap/releases\">shap's releases</a>.</em></p>\n<blockquote>\n<h2>v0.45.0</h2>\n<p>This is a fairly significant release containing a number of breaking changes.</p>\n<p>Thank you to a number of new contributors for their contributions to this release! We are eager to grow the pool of maintainers, so please do get in touch on <a href=\"https://redirect.github.com/shap/shap/issues/3559\">#3559</a> if you are interested in being part of the team.</p>\n<h2>What's Changed</h2>\n<h3>Breaking changes</h3>\n<ul>\n<li>Dropped support for 3.8 in <a href=\"https://redirect.github.com/shap/shap/pull/3414\">shap/shap#3414</a></li>\n<li>Changed type and shape of returned SHAP values in some cases, to be consistent with model outputs. SHAP values for models with multiple outputs are now np.ndarray rather than list, by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3318\">shap/shap#3318</a></li>\n<li>Removed deprecated <code>feature_dependence</code> parameters in TreeExplainer and LinearExplainer by <a href=\"https://github.com/thatlittleboy\"><code>@​thatlittleboy</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3340\">shap/shap#3340</a></li>\n<li>Removed deprecated alias for Coefficient by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3511\">shap/shap#3511</a></li>\n</ul>\n<h3>Added</h3>\n<ul>\n<li>Added support for python 3.12 by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3414\">shap/shap#3414</a></li>\n<li>Added support for GPU build on recent CUDA versions by <a href=\"https://github.com/trivialfis\"><code>@​trivialfis</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3462\">shap/shap#3462</a></li>\n<li>2x import time speedup via lazy importing of pytorch by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3533\">shap/shap#3533</a></li>\n<li>Added support returning the matplotlib figure in bar plots by <a href=\"https://github.com/richarddli\"><code>@​richarddli</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3494\">shap/shap#3494</a></li>\n<li>Added selu activation for tensorflow deep explainer by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3504\">shap/shap#3504</a></li>\n<li>Added support for special characters in catboost models by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3506\">shap/shap#3506</a></li>\n<li>Added ability to control marker size in <code>beeswarm</code> plots by <a href=\"https://github.com/MonoHue\"><code>@​MonoHue</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3530\">shap/shap#3530</a></li>\n</ul>\n<h3>Fixed</h3>\n<ul>\n<li>Fixed XGBoost model load by <a href=\"https://github.com/trivialfis\"><code>@​trivialfis</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3462\">shap/shap#3462</a></li>\n<li>Fixed text masking with certain tokenizers by <a href=\"https://github.com/costrau\"><code>@​costrau</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3536\">shap/shap#3536</a></li>\n<li>Fixed issue with KernelExplainer when explaining tensorflow models by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3542\">shap/shap#3542</a></li>\n<li>Fixed force_plot contribution threshold for negative contributions by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3547\">shap/shap#3547</a></li>\n<li>Removed overwrite of default warning filter or formatter by <a href=\"https://github.com/connortann\"><code>@​connortann</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3514\">shap/shap#3514</a></li>\n</ul>\n<p>.. plus a large number of documentation, testing and other maintenance updates by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> , <a href=\"https://github.com/yuanx749\"><code>@​yuanx749</code></a> , <a href=\"https://github.com/LakshmanKishore\"><code>@​LakshmanKishore</code></a>  and others.</p>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/richarddli\"><code>@​richarddli</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3494\">shap/shap#3494</a></li>\n<li><a href=\"https://github.com/yuanx749\"><code>@​yuanx749</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3458\">shap/shap#3458</a></li>\n<li><a href=\"https://github.com/LakshmanKishore\"><code>@​LakshmanKishore</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3393\">shap/shap#3393</a></li>\n<li><a href=\"https://github.com/trivialfis\"><code>@​trivialfis</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3462\">shap/shap#3462</a></li>\n<li><a href=\"https://github.com/DanGolding\"><code>@​DanGolding</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3526\">shap/shap#3526</a></li>\n<li><a href=\"https://github.com/MonoHue\"><code>@​MonoHue</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3530\">shap/shap#3530</a></li>\n<li><a href=\"https://github.com/costrau\"><code>@​costrau</code></a> made their first contribution in <a href=\"https://redirect.github.com/shap/shap/pull/3536\">shap/shap#3536</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a href=\"https://github.com/shap/shap/compare/v0.44.1...v0.45.0\">https://github.com/shap/shap/compare/v0.44.1...v0.45.0</a></p>\n<h2>v0.44.1</h2>\n<!-- raw HTML omitted -->\n<p>Patch release to fix an issue with the display of force plots.</p>\n<h3>Fixed</h3>\n<ul>\n<li>Fixed HTML issue affecting display of force plots by <a href=\"https://github.com/CloseChoice\"><code>@​CloseChoice</code></a> in <a href=\"https://redirect.github.com/shap/shap/pull/3464\">shap/shap#3464</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/shap/shap/commit/56394f1c208e384ad3302d596e90f6818943c840\"><code>56394f1</code></a> DOCS: Enable subset of pydocstyle rules, bulk update ruff fixes (<a href=\"https://redirect.github.com/shap/shap/issues/3550\">#3550</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/503258bd197060065a6edcf6d7a1d4027d43f752\"><code>503258b</code></a> DOCS: Formatting and phrasing updates for SHAP return values (<a href=\"https://redirect.github.com/shap/shap/issues/3549\">#3549</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/b23058409eb05f5cb9e7e5cc7c59ea22b38a5695\"><code>b230584</code></a> reintroduce tests that were accidentally commented out (<a href=\"https://redirect.github.com/shap/shap/issues/3556\">#3556</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/0aa4cf6c107fe4ec24232e3cd262c3c1c56982cb\"><code>0aa4cf6</code></a> MAINT: Add l1_reg argument to KernelExplainer call() (<a href=\"https://redirect.github.com/shap/shap/issues/3554\">#3554</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/542a97c6918ece3abf8d1afb6db4b6f6dcfdaf6e\"><code>542a97c</code></a> refactor deep explainer tests and relax allowed tolerance (<a href=\"https://redirect.github.com/shap/shap/issues/3555\">#3555</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/e9fd30380fdaae0bf6cc9024a6f7680c470a1b77\"><code>e9fd303</code></a> Update deprecation warnings for l1_reg=&quot;auto&quot; and auto_size_plot=False (<a href=\"https://redirect.github.com/shap/shap/issues/3517\">#3517</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/7a4afd7430f222c66f99533bc09382c0e2a0a5d9\"><code>7a4afd7</code></a> Fix force_plot contribution threshold for negative contributions (<a href=\"https://redirect.github.com/shap/shap/issues/3547\">#3547</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/e1094a268d41b4fa04102a3536bab50ea71a6cba\"><code>e1094a2</code></a> MAINT: Bump ruff version, fix updated rule UP032 (f-strings) (<a href=\"https://redirect.github.com/shap/shap/issues/3552\">#3552</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/ad6733e4b3b1d52343511d07572d8bcea1ce7276\"><code>ad6733e</code></a> Fix issue with KernelExplainer when explaining tensorflow models (<a href=\"https://redirect.github.com/shap/shap/issues/3542\">#3542</a>)</li>\n<li><a href=\"https://github.com/shap/shap/commit/ea3bfc8e23efb866063fbeb2f1a517ae58779631\"><code>ea3bfc8</code></a> BREAKING: make shap explanations consistent for xgboost and lightgbm (<a href=\"https://redirect.github.com/shap/shap/issues/3318\">#3318</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/shap/shap/compare/v0.43.0...v0.45.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=shap&package-manager=pip&previous-version=0.43.0&new-version=0.45.0)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-03-26T16:04:32Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This should be considered when support for Python 3.8 is dropped (October 2024)",
+    "createdAt": "2024-03-26T14:33:46Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2024-03-26T16:04:34Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/253"
+ },
+ {
+  "number": 252,
+  "title": "SHAPRFECV speedup for bigger use-cases and some simple refactoring.",
+  "body": "This PR depends on the PR to be accepted: https://github.com/ing-bank/probatus/pull/248\r\n\r\n______\r\n\r\nThis cleanup removes some more unused code and simplifies parts of our implementations. It should allow for a boost in performance for bigger use-cases, although minimal.\r\n\r\nAlso fix:\r\n\r\n- [x] #242 comments \r\n- [x] #255\r\n- [x] #245",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-04-23T07:32:01Z",
+  "closedAt": "2024-04-23T07:32:01Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Add check if not a str",
+    "path": "probatus/interpret/model_interpret.py",
+    "createdAt": "2024-03-21T21:52:52Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Please fix #242 or comments and #255 in this pr",
+    "createdAt": "2024-03-28T05:30:40Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Also replace scorer with sklearn implementation #245",
+    "createdAt": "2024-03-28T06:56:09Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "duplicate line",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2024-04-11T18:24:47Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "solved",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2024-04-23T07:18:39Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/252"
+ },
+ {
+  "number": 250,
+  "title": "add PR template",
+  "body": "This PR addresses the issue https://github.com/ing-bank/probatus/issues/212",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-03-26T14:03:49Z",
+  "closedAt": "2024-03-26T14:03:49Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "It also solves https://github.com/ing-bank/probatus/issues/123",
+    "createdAt": "2024-03-21T06:56:39Z"
+   },
+   {
+    "author": {
+     "login": "PaulZhutovsky"
+    },
+    "body": "Maybe just:\r\n\r\n```suggestion\r\n- [ ] Documentation update\r\n```\r\n\r\nor do you mean something else?",
+    "path": ".github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md",
+    "createdAt": "2024-03-25T14:52:36Z"
+   },
+   {
+    "author": {
+     "login": "PaulZhutovsky"
+    },
+    "body": "@ReinierKoops and also since I know nothing here, this template will then be auto-created when a user is trying to open a PR, right?",
+    "path": ".github/PULL_REQUEST_TEMPLATE/PULL_REQUEST_TEMPLATE.md",
+    "createdAt": "2024-03-25T14:53:16Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/250"
+ },
+ {
+  "number": 249,
+  "title": "Allow Dependabot to make PR's for updating dependencies",
+  "body": "This addition was proposed in this issue: https://github.com/ing-bank/probatus/issues/244",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-03-26T14:06:22Z",
+  "closedAt": "2024-03-26T14:06:22Z",
+  "comments": [
+   {
+    "author": {
+     "login": "PaulZhutovsky"
+    },
+    "body": "@ReinierKoops I'm always confused with these, how will it be ensured that blindly updating dependencies won't break things? Will it run tests once an update is proposed? Will we still manually merge dependecy-PRs?",
+    "createdAt": "2024-03-25T15:18:20Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "I think it should run test when it proposes new dependencies. Maybe we can configure it to make PR's automatically for it and then it will run unit tests with it",
+    "createdAt": "2024-03-25T15:48:48Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "It proposes solutions. I didn't think of implementing it such that it acts on merging things autonomously.",
+    "createdAt": "2024-03-25T16:08:56Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/249"
+ },
+ {
+  "number": 248,
+  "title": "Explicit support for Regression, performed major refactoring of tests, removed unused code and updated notebooks to work (again).",
+  "body": "This PR depends on the PR to be accepted: https://github.com/ing-bank/probatus/pull/242\r\n\r\n______\r\n\r\nThe PR fixes the following:\r\n\r\n- Removed unused code and so partially fixed: https://github.com/ing-bank/probatus/issues/245\r\n- Updates all notebooks so they are all working: https://github.com/ing-bank/probatus/issues/246\r\n- Add explicit support for regressors and multiclass: : https://github.com/ing-bank/probatus/issues/241 & : https://github.com/ing-bank/probatus/issues/169\r\n- Updated the yaml files for github actions. Now we have a weekly cronjob (instead of daily) to test the notebooks.\r\n- Enable tests which were previously failing or only enabled in certain circumstances (much has changed the last 3 years with regards of adoption of the Mac ARM architecture support)\r\n- Removed most (if not all except one on purpose) of the copyright notice in code.",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-04-11T10:39:18Z",
+  "closedAt": "2024-04-11T10:39:18Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@PaulZhutovsky  @adri0  the branch should be cleaned up a bit now (I rebased it), so reviewing should be (hopefully) easier.",
+    "createdAt": "2024-03-28T06:58:26Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/248"
+ },
+ {
+  "number": 243,
+  "title": "Implement fasttreeshap",
+  "body": "Try to implement fast tree shap. Findings show it most likely won't work due to SHAP and fasttreeshap being not in sync.",
+  "state": "CLOSED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-03-18T21:58:29Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/243"
+ },
+ {
+  "number": 242,
+  "title": "Add explicit state setting",
+  "body": "Set the random states explicitly. \r\n\r\nTasks:\r\n\r\n- [x] Adjust the code where \"sample\" does not use random_state\r\n- [x] Adjust the test code for it\r\n- [x] Make sure the tests use it consistently.\r\n- [x] Look if we can remove some unnecessary checks as mentioned in this issue: https://github.com/ing-bank/probatus/issues/221",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-03-28T05:26:59Z",
+  "closedAt": "2024-03-28T05:26:59Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This PR depends on changes from https://github.com/ing-bank/probatus/pull/239 (Py v312) - so should be merged after.",
+    "createdAt": "2024-03-18T21:21:27Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "The code changes are a general test code cleanup. It should try to reuse parts of the code that before were duplicates. Also the seeds are now set as a fixture and used more \"globally\" that way. ",
+    "createdAt": "2024-03-18T21:22:37Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Also, verbose logging is simplified, however, in the code it does not seem to be used much.\r\n\r\nMaybe at some point later we can discard verbose logging altogether and replace it by loguru's INFO DEBUGGING etc way of logging. However, that idea should maybe be discussed at a later time.",
+    "createdAt": "2024-03-18T21:40:52Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "We should make a more thorough check keeping this in mind: https://github.com/ing-bank/probatus/issues/221 - if we apply whats discussed here I'd imagine much of our test code will be a bit easier and more clean. Will have another look at the test (prolly tomorrow).",
+    "createdAt": "2024-03-18T22:02:01Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This PR should solve this issue: https://github.com/ing-bank/probatus/issues/240",
+    "createdAt": "2024-03-18T22:04:21Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@adri0 its ready for review and includes fixes for multiple issues.",
+    "createdAt": "2024-03-19T08:25:22Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Why not `>1` like the comparisons above? ;)",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2024-03-26T19:01:46Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Maybe remove those \"\"\"Fixture \"\"\" docstrings?",
+    "path": "tests/conftest.py",
+    "createdAt": "2024-03-27T21:13:00Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Also seem like redundant docstring.",
+    "path": "tests/interpret/test_model_interpret.py",
+    "createdAt": "2024-03-27T21:14:32Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "The comments will be fixed in the latest PR. This will be merged.",
+    "createdAt": "2024-03-28T05:25:38Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "because it was a three tiered system. I think we can maybe reduce it even further. Feel free to make a issue!",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2024-03-28T08:43:16Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "removed in latest pr",
+    "path": "tests/conftest.py",
+    "createdAt": "2024-03-28T08:46:41Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "removed all the redundant/not explanatory docstrings from all tests in latest pr",
+    "path": "tests/interpret/test_model_interpret.py",
+    "createdAt": "2024-03-28T08:51:04Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/242"
+ },
+ {
+  "number": 239,
+  "title": "Add compatibility for Python 3.12",
+  "body": "Fixes the deprecation/renaming of SHAP code ",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-03-18T21:51:51Z",
+  "closedAt": "2024-03-18T21:51:51Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This should fix: https://github.com/ing-bank/probatus/issues/234 and https://github.com/ing-bank/probatus/issues/233 ",
+    "createdAt": "2024-03-17T20:37:04Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@adri0 it is finally succeeded and ready for review ;)",
+    "createdAt": "2024-03-17T21:31:28Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Maybe you can add python 3.12 to the [unit test matrix in the workflow](https://github.com/ing-bank/probatus/blob/bd831536d70554eafa74d656a8de8259245b924e/.github/workflows/unit_tests.yml#L26).",
+    "createdAt": "2024-03-18T21:18:49Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "> Maybe you can add python 3.12 to the [unit test matrix in the workflow](https://github.com/ing-bank/probatus/blob/bd831536d70554eafa74d656a8de8259245b924e/.github/workflows/unit_tests.yml#L26).\r\n\r\nNice find. I forgot! It should be added now.",
+    "createdAt": "2024-03-18T21:20:38Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/239"
+ },
+ {
+  "number": 238,
+  "title": "Remove rounding of metrics to improve granularity",
+  "body": "Rounding reported metrics to 3 decimals unnecessarily removes granularity that some users may need. It's better to remove this.\r\n\r\nThis is an update of the pull request proposed by @christophermadsen in #190 and associated Pull Request, but it never made it onto main. I'm hoping this can be included now. ",
+  "state": "MERGED",
+  "author": {
+   "login": "daaf89"
+  },
+  "mergedAt": "2024-03-17T20:33:52Z",
+  "closedAt": "2024-03-17T20:33:52Z",
+  "comments": [
+   {
+    "author": {
+     "login": "daaf89"
+    },
+    "body": "@ReinierKoops You looked at the original instance of this proposal, perhaps you can review it again? ",
+    "createdAt": "2024-03-13T13:51:35Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thanks, as you see, right now unrelated tests are failing. I'll try to fix that first. Then this branch will be merged as well",
+    "createdAt": "2024-03-13T14:02:24Z"
+   },
+   {
+    "author": {
+     "login": "daaf89"
+    },
+    "body": "Thanks Reinier! ",
+    "createdAt": "2024-03-13T14:08:31Z"
+   },
+   {
+    "author": {
+     "login": "christophermadsen"
+    },
+    "body": "> Rounding reported metrics to 3 decimals unnecessarily removes granularity that some users may need. It's better to remove this.\r\n> \r\n> This is an update of the pull request proposed by @christophermadsen in #190 and associated Pull Request, but it never made it onto main. I'm hoping this can be included now.\r\n\r\nI see now that #191 was just closed and never merged, I think that's unfortunate. It would be better if we didn't close pull requests and issues just because they are relatively old.\r\n\r\nThe work is identical to mine, so if @ReinierKoops can fix the (ubuntu, 3.10) unit test, I will also vouch for it to be merged.\r\n\r\nThank you @daaf89 ",
+    "createdAt": "2024-03-13T14:14:50Z"
+   },
+   {
+    "author": {
+     "login": "christophermadsen"
+    },
+    "body": "@ReinierKoops thank you for fixing and closing this.",
+    "createdAt": "2024-03-17T20:35:54Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/238"
+ },
+ {
+  "number": 237,
+  "title": "simplify probatus: remove 'old' code, update mkdocs config",
+  "body": "Remove a lot of the extra packages which makes maintaining MKDOCS easier.",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-03-17T19:51:20Z",
+  "closedAt": "2024-03-17T19:51:20Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Also enables a more modular approach to installing packages.",
+    "createdAt": "2024-03-07T12:12:15Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Possible fix for https://github.com/ing-bank/probatus/issues/227",
+    "createdAt": "2024-03-07T12:15:14Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "PR https://github.com/ing-bank/probatus/pull/238 depends on this PR, since this should also solve the issues blocking that PR.\r\n",
+    "createdAt": "2024-03-14T10:17:58Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This PR should simplify Probatus by deprecating code that hasn't been updated in a long time and simplify some of its dependencies. \r\n\r\n- bucketing is better done in Feature Engine, Skorecard or Sklearn, etc\r\n- statistical tests and sampling are better done in Statsmodels, scipy, etc\r\n- imputation is better done in Feature Engine, etc\r\n\r\nDue to the breaking changes (removing (never used) functionality (as found by asking multiple users) to make maintainability easier for this repository and start introducing new functionality) the version numbering starts from 3.0.0.",
+    "createdAt": "2024-03-14T10:22:30Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Wow major refactoring going on! :)",
+    "createdAt": "2024-03-17T17:46:58Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "No more black? :(",
+    "path": ".pre-commit-config.yaml",
+    "createdAt": "2024-03-17T17:53:48Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "So from now on we'll keep the changes in github's release notes/tag comments?",
+    "path": "CHANGELOG.md",
+    "createdAt": "2024-03-17T17:54:54Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Since you're fixing docs here. Maybe we can fix the git clone link below?",
+    "path": "docs/index.md",
+    "createdAt": "2024-03-17T18:06:22Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Even better. Idk if it's possible, maybe this index could be generated from the README.md when building? It's essentially the same info, but here it's totally outdated.",
+    "path": "docs/index.md",
+    "createdAt": "2024-03-17T18:31:08Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "There's also this `KS2_Example.png` that apparently is not being used anywhere.",
+    "path": "docs/img/autodist.png",
+    "createdAt": "2024-03-17T18:36:49Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "thanks for the review :D integrated via ruff-format",
+    "path": ".pre-commit-config.yaml",
+    "createdAt": "2024-03-17T18:40:06Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "I think that would decrease some of our workload",
+    "path": "CHANGELOG.md",
+    "createdAt": "2024-03-17T18:40:30Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Would be great! Do you perhaps have a proposal for that how to do that?",
+    "path": "docs/index.md",
+    "createdAt": "2024-03-17T18:41:11Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Sounds good :)",
+    "path": "CHANGELOG.md",
+    "createdAt": "2024-03-17T19:29:26Z"
+   },
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "I did some googling. It [may be not possible](https://github.com/mkdocs/mkdocs/issues/3152). So I guess I'd just keep the very basic and remove the outdated info, adding that the instructions on how to run/build are in the readme.md in the repo's root.",
+    "path": "docs/index.md",
+    "createdAt": "2024-03-17T19:49:32Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/237"
+ },
+ {
+  "number": 235,
+  "title": "Fix and reenable notebook tests",
+  "body": "- Refactor notebook tests to run all ipynb found in the `docs` folder.\r\n- Allows for exclusion of currently breaking notebooks.\r\n- Notebook tests will only run if the env variable `TEST_NOTEBOOKS` is set (which by default is not set).\r\n- Reenable notebooks tests in Github test workflow (by setting `TEST_NOTEBOOKS=1`).\r\n- Set a timeout (180 seconds) to which notebooks need to run.\r\n- Refactor the notebook `docs/tutorials/nb_automatic_best_num_features.ipynb` to run faster.\r\n- Fix compatibility issue on notebook `docs/tutorials/nb_imputation_comparison.ipynb` related to `IterativeImputer`.\r\n- Fix breaking SHAP dependency.",
+  "state": "MERGED",
+  "author": {
+   "login": "adri0"
+  },
+  "mergedAt": "2023-10-23T08:54:44Z",
+  "closedAt": "2023-10-23T08:54:44Z",
+  "comments": [
+   {
+    "author": {
+     "login": "adri0"
+    },
+    "body": "Note to self: once this is merged create the following issues:\r\n- Fix still failing notebooks.\r\n- Reconsider enabling lightgbm tests?",
+    "createdAt": "2023-10-19T15:41:29Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/235"
+ },
+ {
+  "number": 232,
+  "title": "v2.1.1",
+  "body": "Update newer version to include latest SHAP",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-09-13T07:57:49Z",
+  "closedAt": "2023-09-13T07:57:49Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@detrin sorry for the delay",
+    "createdAt": "2023-09-12T15:24:47Z"
+   },
+   {
+    "author": {
+     "login": "detrin"
+    },
+    "body": "@ReinierKoops No issue, I am happy for the release! 🚀",
+    "createdAt": "2023-09-12T16:12:28Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/232"
+ },
+ {
+  "number": 228,
+  "title": "Fixing tests for shap==0.42.1",
+  "body": "https://github.com/ing-bank/probatus/issues/225\r\n\r\nAlso fixed one test for numpy>=1.24.0.\r\n\r\nBtw, what is the suggested workflow with pre-commit? Add it into virtual env and commit from a command line after I used pre-commit run? Do you use vscode as well?",
+  "state": "MERGED",
+  "author": {
+   "login": "detrin"
+  },
+  "mergedAt": "2023-08-26T09:34:54Z",
+  "closedAt": "2023-08-26T09:34:54Z",
+  "comments": [
+   {
+    "author": {
+     "login": "detrin"
+    },
+    "body": "@ReinierKoops Could you have a look at this PR?",
+    "createdAt": "2023-08-25T21:52:01Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Lets see how it runs. Please have a look at the file https://github.com/ing-bank/probatus/blob/main/CONTRIBUTING.md",
+    "createdAt": "2023-08-26T08:26:26Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thanks again, nice work!",
+    "createdAt": "2023-08-26T08:27:24Z"
+   },
+   {
+    "author": {
+     "login": "detrin"
+    },
+    "body": "@ReinierKoops I am glad to help :)\r\n\r\nI followed the instructions, however I am not sure whether I should use pre-commit within venv or globally. Do yo personally use venv or poetry or something else?",
+    "createdAt": "2023-08-26T08:32:42Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Personally I use conda separate env to test it",
+    "createdAt": "2023-08-26T09:33:36Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/228"
+ },
+ {
+  "number": 226,
+  "title": "[WIP] Update SHAP and fix mkdocs",
+  "body": "This PR will fix mkdocs, update shap to the latest version where a few tests need to be fixed, add __version__ method, add optional dependencies back for the probatus package, and some other minor issues.",
+  "state": "CLOSED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-10-18T16:19:15Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/226"
+ },
+ {
+  "number": 223,
+  "title": "new version for Probatus",
+  "body": "Three PR's have been merged since last release. Will make another release. This'll be a 'feature' one.",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-07-27T14:24:13Z",
+  "closedAt": "2023-07-27T14:24:13Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/223"
+ },
+ {
+  "number": 222,
+  "title": "make plot method in ShapRFECV return a matplotlib figure",
+  "body": "make plot method in ShapRFECV return a matplotlib figure instead of the axis. otherwise there's no figure to adjust",
+  "state": "MERGED",
+  "author": {
+   "login": "fritshermans"
+  },
+  "mergedAt": "2023-07-27T07:58:28Z",
+  "closedAt": "2023-07-27T07:58:28Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/222"
+ },
+ {
+  "number": 220,
+  "title": "Implement automatic feature selection methods",
+  "body": "This PR addresses #219 \r\n\r\n**Work tasks:**\r\n\r\n- [x] Implement automatic feature selection method `_get_best_num_features()`\r\n    - [x] 1. best: strictly selects the num_features with the highest model score.\r\n    - [x] 2. best_coherent: For iterations that are within standard_error_threshold of the highest score, select the iteration with the lowest standard deviation of model score.\r\n    - [x] 3. best_parsimonious: For iterations that are within standard_error_threshold of the highest score, select the iteration with the fewest features.\r\n- [x] Implement ability to get support (boolean mask of features selected)\r\n- [x] Implement ability to get feature ranking\r\n- [x] Update doc strings throughout\r\n- [x] Update documentation\r\n- [x] Add unit tests",
+  "state": "MERGED",
+  "author": {
+   "login": "markdregan"
+  },
+  "mergedAt": "2023-07-05T15:40:50Z",
+  "closedAt": "2023-07-05T15:40:50Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Love it, great work!",
+    "path": "docs/tutorials/nb_automatic_best_num_features.ipynb",
+    "createdAt": "2023-07-05T05:38:08Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "A small edit here to suggest the removal of unused imports should leave you with:\r\n\r\nfrom probatus.feature_elimination import ShapRFECV\r\nfrom sklearn.datasets import make_classification\r\nfrom catboost import CatBoostClassifier",
+    "path": "docs/tutorials/nb_automatic_best_num_features.ipynb",
+    "createdAt": "2023-07-05T05:47:23Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "```suggestion\r\n        support = [True if col in feature_names_selected else False for col in self.column_names]\r\n```",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-05T05:53:19Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "```suggestion\r\n        ranking = [features_eliminated_dict[col] for col in self.column_names]\r\n```",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-05T05:53:32Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "It should raise an error if not fitted, therefore this assertion can be removed",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-05T06:36:18Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "(it will also be removed in other tests see https://github.com/ing-bank/probatus/issues/221)",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-05T06:37:40Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "I've modified your unit test to be independent from the other unit tests (X, y, weight) such that when we refactor other unit tests it is easier to work with:\r\n\r\n```\r\ndef test_shap_automatic_num_feature_selection():\r\n    \"\"\"\r\n    Test automatic num feature selection methods\r\n    \"\"\"\r\n    X = pd.DataFrame(\r\n        {\r\n            \"col_1\": [1, 0, 1, 0, 1, 0, 1, 0],\r\n            \"col_2\": [0, 0, 0, 0, 0, 1, 1, 1],\r\n            \"col_3\": [1, 1, 1, 0, 0, 0, 0, 0],\r\n        }\r\n    )\r\n    y = pd.Series([0, 0, 0, 0, 1, 1, 1, 1])\r\n    \r\n    clf = DecisionTreeClassifier(max_depth=1, random_state=1)\r\n    shap_elimination = ShapRFECV(\r\n        clf,\r\n        random_state=1,\r\n        step=1,\r\n        cv=2,\r\n        scoring=\"roc_auc\",\r\n        n_jobs=1,\r\n    )\r\n    _ = shap_elimination.fit_compute(X, y, approximate=True, check_additivity=False)\r\n    \r\n    best_features = shap_elimination.get_reduced_features_set(num_features=\"best\")\r\n    best_coherent_features = shap_elimination.get_reduced_features_set(\r\n        num_features=\"best_coherent\",\r\n    )\r\n    best_parsimonious_features = shap_elimination.get_reduced_features_set(\r\n        num_features=\"best_parsimonious\"\r\n    )\r\n    \r\n    assert best_features == [\"col_3\"]\r\n    assert best_coherent_features == [\"col_1\", \"col_2\", \"col_3\"]\r\n    assert best_parsimonious_features == [\"col_3\"]\r\n```\r\n\r\nIt should also simplify the test a bit I hope.",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-05T07:03:37Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "TY!",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-05T12:47:31Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/220"
+ },
+ {
+  "number": 218,
+  "title": "Penalty on shap calculation for higher variance",
+  "body": "PR addresses #216 \r\n\r\n**Overall objective:** Add penalty to features that has high variance in underlying shap values - when computing feature importance. This will (in theory) encourage selection of features that have more coherency across CV folds.\r\n\r\n**API design:**\r\n- Single parameter `shap_variance_penalty_factor` used to control enabling/disabling in addition to controlling the amount of penalty added to the mean(shap) computation. \r\n- Formula: `penalized_shap_abs_mean = (mean_shap - (std_shap * shap_variance_penalty_factor))`\r\n- `shap_variance_penalty_factor` = None (default docstring)\r\n- `shap_variance_penalty_factor`= 0 (same as None, no penalty)\r\n- `shap_variance_penalty_factor`= 1 (one standard deviation of mean penalty)\r\n\r\n**Work tasks:**\r\n- [x] Add `shap_variance_penalty_factor` parameter to `ShapRFECV.fit`, `compute` & `fit_compute`\r\n- [x] Update `EarlyStoppingShapRFECV.fit`, `compute` & `fit_compute`\r\n- [x] Add `shap_variance_penalty_factor` to `shap_helpers.calculate_shap_importance`\r\n- [x] Update `ShapModelInterpreter.fit`, `compute` & `fit_compute`\r\n- [x] Add to doc strings throughout\r\n- [x] Run simulation demonstrating impact of `shap_variance_penalty_factor` feature\r\n- [x] Add unit tests\r\n- [x] Add tutorial comparing RFECV methods and results as jupyter notebook\r\n\r\n**Reviewers:** LMK any changes / improvements that can be made.",
+  "state": "MERGED",
+  "author": {
+   "login": "markdregan"
+  },
+  "mergedAt": "2023-07-06T14:41:39Z",
+  "closedAt": "2023-07-06T14:41:39Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Maybe the penalizing factor (2.0) should be the parameter (Default 1 which means its the same as it was before, 2 recommended, ...). What do you think?",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2023-07-01T19:34:29Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "For the power user, there is value in being able to control this. Intuitively, we could think of it as the `std penalty factor`. I'd formulate as: `penalized_shap_abs_mean = (mean_shap - (std_shap * std_penalty_factor))`\r\n\r\nAs such, std_penalty_factor = 0, would be no penalty (disabled). std_penalty_factor = 0.5 would be as I have implemented above.\r\n\r\nFrom an API usability POV, what is the preferred way to implement? We could:\r\n1. Have two params: shap_variance_penalty (bool) & shap_variance_penalty_factor (I don't like this approach)\r\n2. Have one param: shap_variance_penalty_factor\r\n\r\nFor 2, it could be disabled by either setting \r\n- shap_variance_penalty_factor = None, or\r\n- shap_variance_penalty_factor = 0\r\n\r\nThanks for the feedback.",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2023-07-01T20:24:49Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "I agree, I think approach 2 would make the most sense. My preference would be to keep it numerical but intuitive (factor=0). However, in the code we often make use of 'None' as default (https://github.com/ing-bank/probatus/blob/main/probatus/feature_elimination/feature_elimination.py), so to be more in line with the rest of the library I think using 'None' as default makes more sense. Please let me know your thoughts :)",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2023-07-01T20:34:32Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "Yeah, that makes sense. I'll draft up something along those lines and test the code a bit more. Thanks",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2023-07-01T20:57:48Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "... must be None, int or float ... ",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-04T06:29:04Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "... must be None, int or float ...",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2023-07-04T06:36:29Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "A small typo :\r\ndocs/tutorials/nb_shap_variance_penalty_and_results_comparrison.ipynb > docs/tutorials/nb_shap_variance_penalty_and_results_comparison.ipynb",
+    "path": "docs/tutorials/nb_shap_variance_penalty_and_results_comparrison.ipynb",
+    "createdAt": "2023-07-05T17:01:42Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "```\r\n    assert shap_elimination.fitted\r\n    shap_elimination._check_if_fitted()\r\n```\r\n\r\ncan be removed because its already checked by compute()",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-05T17:07:16Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This bit puzzles me a bit why. I'll have to investigate a bit.",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-05T17:07:40Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "I've ran your branch locally with Python version 3.8, 3.9, 3.10 and 3.11 where I've reverted this part back \r\n\r\n```\r\nparam_grid = {\"criterion\": [\"gini\"], \"min_samples_split\": [1, 2]}\r\n```\r\n\r\nI am not able to reproduce the error. Could you revert it back?\r\n",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-06T05:57:25Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "Absolutely. I still see the error on my side after reverting. But will revert and push. ",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-07-06T13:31:08Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "Made those changes @ReinierKoops. ",
+    "createdAt": "2023-07-06T13:51:53Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Maybe it’s running on a different version of scikit learn? Would it be possible to output all the parameters of the algo that you have for the test? Also implicit ones.",
+    "createdAt": "2023-07-06T14:05:43Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "Old version of scikit-learn was the issue. Tests passing my side now. ",
+    "createdAt": "2023-07-06T14:24:27Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Awesome, happy it’s confirmed where the problem lies!",
+    "createdAt": "2023-07-06T14:42:30Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thanks again, your pr’s are much appreciated!",
+    "createdAt": "2023-07-06T14:43:12Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "Very welcome. Thank you and team. ",
+    "createdAt": "2023-07-06T14:44:38Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/218"
+ },
+ {
+  "number": 217,
+  "title": "[WIP] Penalty on shap calculation for higher variance",
+  "body": "PR addresses #216 \r\n\r\n**Overall objective:** Add penalty to features that has high variance in underlying shap values - when computing feature importance. This will (in theory) encourage selection of features that have more coherency across CV folds.\r\n\r\n**Work tasks:**\r\n- [ ] Add `shap_variance_penalty` parameter to `ShapRFECV.fit`, `compute` & `fit_compute`\r\n- [ ] Add `shap_variance_penalty` parameter to `EarlyStoppingShapRFECV.fit`, `compute` & `fit_compute`\r\n- [ ] Add `shap_variance_penalty` to `shap_helpers.calculate_shap_importance`\r\n- [ ] Add `shap_variance_penalty` to `ShapModelInterpreter.fit`, `compute` & `fit_compute`\r\n- [ ] Add to doc strings throughout\r\n- [ ] Run simulation demonstrating impact of `shap_variance_penalty` feature\r\n\r\n**Reviewers:** LMK any changes / improvements that can be made.",
+  "state": "CLOSED",
+  "author": {
+   "login": "markdregan"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-01T18:50:08Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Set is by definition unordered. Using such implementation for classifiers (like Lightgbm) where the order of column input is important to determine which are kept and which are not, leads to bugs. Therefore we use pd.series.unique() which guarantees the order is the same as the input minus the features which are duplicate.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:11:20Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Same here",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:11:30Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "We need groups for the implementation since this guarantees a cv split which keeps the groups in mind (and thus conceptually allows us to alleviate some bias introduced when we don’t consider for these groups).",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:13:00Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Again here",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:13:13Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This is not required.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:13:34Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Out of curiosity, why is this removed?",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:15:07Z"
+   },
+   {
+    "author": {
+     "login": "markdregan"
+    },
+    "body": "This is odd. The diff between my PR and main shown here is not right. I didn't make many of these changes. I think I know the issue. I think I based off an older version. I might have to do a fresh PR...",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-07-01T18:33:16Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/217"
+ },
+ {
+  "number": 215,
+  "title": "Fix publish_to_pypi.yml",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-19T07:35:18Z",
+  "closedAt": "2023-06-19T07:35:18Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/215"
+ },
+ {
+  "number": 214,
+  "title": "Add all folders to pre-commit check",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-19T07:28:19Z",
+  "closedAt": "2023-06-19T07:28:19Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/214"
+ },
+ {
+  "number": 206,
+  "title": "Probatus 2.0.0: Bump version + add pre-commit hooks",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-08T12:39:41Z",
+  "closedAt": "2023-06-08T12:39:41Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/206"
+ },
+ {
+  "number": 199,
+  "title": "Propose fix for failing builds",
+  "body": "The current builds (partially?) fail on not being able to find CMake and Ninja. This should fix it. ",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-05-30T07:24:25Z",
+  "closedAt": "2023-05-30T07:24:25Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/199"
+ },
+ {
+  "number": 197,
+  "title": "Change to Pandas implementation to keep the order",
+  "body": "Merging this will preserve the order of the features as suggested by @PaulZhutovsky .",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-02T08:03:24Z",
+  "closedAt": "2023-06-02T08:03:24Z",
+  "comments": [
+   {
+    "author": {
+     "login": "gverbock"
+    },
+    "body": "why \"static\" and in \"f3_static\"? \r\n\r\nWhat about\r\n\r\n```\r\nfeature_names = [f\"f{num}\" for num in range(1, 21}]\r\n```\r\n\r\nwith eventually a rename if you need \"f3_static\"\r\n",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-06-02T05:34:16Z"
+   },
+   {
+    "author": {
+     "login": "gverbock"
+    },
+    "body": "Would it be nice to comment that this is for freezing the order?",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-06-02T05:36:23Z"
+   },
+   {
+    "author": {
+     "login": "gverbock"
+    },
+    "body": "usecase => use case",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-06-02T05:37:23Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed.",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-06-02T07:40:21Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2023-06-02T07:40:28Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fixed.",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2023-06-02T07:40:33Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/197"
+ },
+ {
+  "number": 194,
+  "title": "Fix nondeterministic behavior",
+  "body": "See issue #192  @gverbock @PaulZhutovsky ",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-05-02T13:07:50Z",
+  "closedAt": "2023-05-02T13:07:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/194"
+ },
+ {
+  "number": 191,
+  "title": "Remove unnecessary rounding of metrics.",
+  "body": "Rounding reported metrics to 3 decimals unnecessarily removes granularity that some users may need. It's better to remove this.\r\n\r\nResolves #190\r\nCloses #190",
+  "state": "CLOSED",
+  "author": {
+   "login": "christophermadsen"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-04T13:03:16Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/191"
+ },
+ {
+  "number": 188,
+  "title": "Compatibility early stopping with old lgbm",
+  "body": "Fixes #187 \r\n\r\n'lightgbm.print_evaluation' was renamed to 'log_evaluation' after lgbm 3.3.0",
+  "state": "CLOSED",
+  "author": {
+   "login": "Alcoholrithm"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-06-04T05:59:57Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/188"
+ },
+ {
+  "number": 186,
+  "title": "Fix CI failing on python 3.7",
+  "body": "See #185 ",
+  "state": "CLOSED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": null,
+  "closedAt": "2022-04-19T18:35:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/186"
+ },
+ {
+  "number": 184,
+  "title": "170 fix shap error cat features",
+  "body": "Fixes #170 \r\n\r\nWith this change a workaround for the issue https://github.com/slundberg/shap/issues/480 is proposed.\r\n\r\nThe workaround consists in not passing any masking data when `feature_perturbation` is explicitly set to `tree_path_dependent` in the `fit_compute` method or when the dataset contains categorical features. This will force shap explainer to use the `tree_path_dependent` strategy (instead of `interventional`), which supports categorical features explanation and should not raise the exception:\r\n\r\n```\r\nAttributeError: 'TreeEnsemble' object has no attribute 'values'\r\n```\r\n\r\nA very nice explanation of the differences between `tree_path_dependent` and `interventional` can be found here https://github.com/slundberg/shap/issues/1098#issuecomment-599622022.",
+  "state": "MERGED",
+  "author": {
+   "login": "ClaudioSalvatoreArcidiacono"
+  },
+  "mergedAt": "2022-03-21T15:06:31Z",
+  "closedAt": "2022-03-21T15:06:31Z",
+  "comments": [
+   {
+    "author": {
+     "login": "gverbock"
+    },
+    "body": "Should we pass the 0.2 as a parameter? ",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2022-03-21T10:02:36Z"
+   },
+   {
+    "author": {
+     "login": "gverbock"
+    },
+    "body": "Wasn't it that mask is only \"required\" for logistic regression @anilkumarpanda? ",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2022-03-21T10:04:46Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Mask is required for non Tree-based models.\r\nFor Tree-based models you can have two types of `feature_perturbation`: `tree_path_dependent` and `interventional`. The former does not require a background dataset (aka mask), the latter does require it.\r\nIt is explained in the shap documentation:\r\nhttps://shap.readthedocs.io/en/latest/generated/shap.explainers.Tree.html#shap.explainers.Tree.__init__\r\n(see the `feature_perturbation` parameter)",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2022-03-21T10:17:11Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "This change is out of scope for this issue.",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2022-03-21T10:20:51Z"
+   },
+   {
+    "author": {
+     "login": "anilkumarpanda"
+    },
+    "body": "True,a mask is required for non tree based models.",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2022-03-21T10:35:52Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/184"
+ },
+ {
+  "number": 182,
+  "title": "Add ability to use \"Grouped\" CV instances from scikit-learn",
+  "body": "closes #181 \r\n\r\nAllows the usage of Group CV objects in `ShapRFECV`. ",
+  "state": "MERGED",
+  "author": {
+   "login": "PaulZhutovsky"
+  },
+  "mergedAt": "2022-04-21T07:59:32Z",
+  "closedAt": "2022-04-21T07:59:33Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "I would add the new param as a last parameter to improve backward compatibility\r\n```suggestion\r\n        sample_weight=None,\r\n        columns_to_keep=None,\r\n        column_names=None,\r\n        groups=None,\r\n```",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2022-03-18T09:46:14Z"
+   },
+   {
+    "author": {
+     "login": "PaulZhutovsky"
+    },
+    "body": "I made the change, thanks! I was following the argument order for [RFECV](https://github.com/scikit-learn/scikit-learn/blob/37ac6788c9504ee409b75e5e24ff7d86c90c2ffb/sklearn/feature_selection/_rfe.py#L635) but you are right it makes more sense to be backward compatible here.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2022-03-20T11:37:16Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/182"
+ },
+ {
+  "number": 180,
+  "title": "Fix unit test issues",
+  "body": "Fixes #179 ",
+  "state": "MERGED",
+  "author": {
+   "login": "ClaudioSalvatoreArcidiacono"
+  },
+  "mergedAt": "2022-02-23T21:59:08Z",
+  "closedAt": "2022-02-23T21:59:08Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Without this change, the dtypes of the columns returned by this function would be `object` instead of `float64` in some versions of pandas.\r\n\r\nCreating a completely empty data frame avoids this issue without changing functionalities. ",
+    "path": "probatus/metric_volatility/metric.py",
+    "createdAt": "2022-02-23T13:29:02Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Add short description to satisfy flake8 requirements",
+    "path": "probatus/stat_tests/distribution_statistics.py",
+    "createdAt": "2022-02-23T13:29:26Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "DataFrame.append is deprecated ([see also](https://pandas.pydata.org/docs/whatsnew/v1.4.0.html#deprecated-dataframe-append-and-series-append)) so a better approach would be to first create a list of dictionaries and then transform to DF.\r\n\r\nThis deprecation warning was adding up with the regular warning generated by Probatus and it was causing the test that checks the number of warnings to fail.\r\n\r\n",
+    "path": "probatus/stat_tests/distribution_statistics.py",
+    "createdAt": "2022-02-23T13:33:42Z"
+   },
+   {
+    "author": {
+     "login": "operte"
+    },
+    "body": "I can't add a comment in the right place, but following this logic, would it be a good idea to do the same on probatus/metric_volatility/metric.py line 120 and probatus/metric_volatility/volatility.py line 299?",
+    "path": "probatus/stat_tests/distribution_statistics.py",
+    "createdAt": "2022-02-23T14:16:27Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Changed :) ",
+    "path": "probatus/stat_tests/distribution_statistics.py",
+    "createdAt": "2022-02-23T15:00:08Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/180"
+ },
+ {
+  "number": 178,
+  "title": "Correct mask dimension",
+  "body": "Pull request based on #176 ",
+  "state": "MERGED",
+  "author": {
+   "login": "gverbock"
+  },
+  "mergedAt": "2022-01-27T12:28:38Z",
+  "closedAt": "2022-01-27T12:28:38Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/178"
+ },
+ {
+  "number": 177,
+  "title": "Drop explicit support for python 3.6 as it is end of life, add 3.10",
+  "body": "## Changed\r\n\r\n- Drop explicit support for python 3.6 as it is end of life (package will still work on 3.6), see [stop using python 3.6](https://pythonspeed.com/articles/stop-using-python-3.6/)\r\n- Added explicit support and unit testing for python 3.10",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2022-01-14T08:50:10Z",
+  "closedAt": "2022-01-14T08:50:10Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/177"
+ },
+ {
+  "number": 175,
+  "title": "Compatibility early stopping catboost",
+  "body": "This PR addresses issue #146 \r\n\r\n- adds compatibility for CatBoost models to EarlyStoppingShapRFECV",
+  "state": "MERGED",
+  "author": {
+   "login": "ClaudioSalvatoreArcidiacono"
+  },
+  "mergedAt": "2021-12-08T16:31:31Z",
+  "closedAt": "2021-12-08T16:31:31Z",
+  "comments": [
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "I think the style change might be caused by using different setting of pre-commit hooks. Can you check if you are using the correct one (the configuration in the root of the repo)?\r\nThere are multiple people working on this file and i want to prevent conflicts caused by style fixes.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-03T20:01:18Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Can we do the import within this function instead of the top?\r\n",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-03T20:04:48Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Can you get the import here for catboost? instead of the top of the file",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-03T20:05:34Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "I really like the solution that you came up with!",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-03T20:06:06Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Since now we don't import the lightgbm at the top of the file, the 3 packages can go to the extra dependencies. In case someone wants to use one of these models in shap RFECV the users will take care of installing them since they will need to pass them.\r\nI would put these 3 into extra dependencies. What do you think?",
+    "path": "setup.py",
+    "createdAt": "2021-12-03T20:07:36Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "So far we have problems with lightbm tests on macos. They simply fail because we are not able to get the image needed for lightgbm them. This decorator is a temporary solutions to skip them for macos machines.\r\n\r\nI see the similar issue happens for catboost model. That is why I would suggest to put the decorator in the 2 extra tests you added.\r\n",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2021-12-03T20:10:00Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Can you also add one test for XGBoost, just to make sure it works as well ?",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2021-12-03T20:10:38Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Can you add in docs pages information that we support xgb, catboost and lightgbm for shaprfecv?\r\n\r\nThis would go to both:\r\n docs/tutorials/nb_shap_feature_elimination.ipynb\r\nREADME.md",
+    "path": ".gitignore",
+    "createdAt": "2021-12-03T20:12:15Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Thanks :) \r\n",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-06T17:02:19Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "The import has been moved here",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-06T17:02:33Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "I have moved the import, let me know if we can resolve this comment",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-06T17:02:50Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "I am using black with line length 120, accordingly to the pre-commit hooks.\r\n\r\nIn the change the removed lines had a smaller line length and for this reason they have been moved to one line.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-06T17:03:56Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "To solve this issue I have taken a slightly unorthodox approach.\r\n\r\nThe base idea is that if a user is passing a model from Catboost, XGboost or LightGBM to RFECV, he/she already has this library installed in their environment. So I have thought to surround each import with a try except statement and to ignore import errors. Please let me know if you are ok with it.",
+    "path": "setup.py",
+    "createdAt": "2021-12-06T17:33:30Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Not unorthodox at all actually :) You can take this a step further and replace the import with a 'mock' instance where `.__call__` will invoke a helpful 'not installed' error only when the import is actually used. `probatus` already supports this, you can use `utils.exceptions.NotInstalledError`. See https://github.com/ing-bank/probatus/blob/5c5b0aac216881782e005e79ab47668d7a93164a/probatus/utils/exceptions.py#L57 ",
+    "path": "setup.py",
+    "createdAt": "2021-12-06T19:28:36Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Added, thanks for the tip",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2021-12-07T08:43:33Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Added, something a bit weird happened tho.\r\n\r\nIn the last test XGBoost gets a test score of 0.3333.",
+    "path": "tests/feature_elimination/test_feature_elimination.py",
+    "createdAt": "2021-12-07T08:44:17Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "This should have been added in previous commits.",
+    "path": ".gitignore",
+    "createdAt": "2021-12-07T08:44:49Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Hi @timvink, thanks for joining this review :). \r\n\r\nSorry, I did not understand what do you mean when you say\r\n\r\n> ... replace the import with a 'mock' instance ... \r\n\r\nThe intention of my code is:\r\n\r\nI am a user of Probatus that likes to use LightGBM.\r\nI already have a virtual environment where Probatus and LightGBM are installed.\r\nI use the class RFECV of Probatus passing the LightGBM classifier instance I have created earlier in my code.\r\nProbatus tries to import cat boosts, but it fails because the user has installed LightGBM - this step is ignored.\r\nProbatus tries to import LightGBM and it succeeds.\r\nProbatus Cretes fit params compatible with LightGBM.\r\n\r\nNow Imagine the user wants to pass something else to RFECV, like a RandomForestClassifier from sklearn. All of the imports will fail and the user will receive a model not supported error.\r\n\r\nIt seems like a legit behaviour to me.\r\n\r\nWhat would you suggest instead :) ?\r\n",
+    "path": "setup.py",
+    "createdAt": "2021-12-07T08:53:39Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "No problem, still keeping an eye on the probatus development :)\r\n\r\nI didn't look in detail enough, I thought you had a top level `try: import .. except: pass` and then `NotInstalledError` can help with a 'mock' to create a more helpfull error message.\r\n\r\nI looked at your implementation of ` def _get_fit_params` and I think it's quite elegant actually! ",
+    "path": "setup.py",
+    "createdAt": "2021-12-07T14:05:51Z"
+   },
+   {
+    "author": {
+     "login": "ClaudioSalvatoreArcidiacono"
+    },
+    "body": "Thanks :), happy to hear that you are still hanging around ;) ",
+    "path": "setup.py",
+    "createdAt": "2021-12-07T16:56:35Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/175"
+ },
+ {
+  "number": 174,
+  "title": "Multi class shap rfecv",
+  "body": "Re https://github.com/ing-bank/probatus/issues/169 I have added support for multi-class classification and ensured that regression will still work. I haven't written any unit tests because I'm not familiar with how pytest works, but all that should be needed is to re-run the existing tests with a multi-class target instead of binary.",
+  "state": "MERGED",
+  "author": {
+   "login": "lproth"
+  },
+  "mergedAt": "2023-12-05T21:32:21Z",
+  "closedAt": "2023-12-05T21:32:21Z",
+  "comments": [
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Instead of removing this i would do the following:\r\nadd parameter: allow_regression=False, and then if the parameter is true we skip this part, otherwise it would run.\r\n\r\nThe reason behind is for other features we will not support regression, and only for shaprfecv for now we will.",
+    "path": "probatus/utils/arrayfuncs.py",
+    "createdAt": "2021-12-03T19:51:01Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "How does this work for regression?",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2021-12-03T19:51:43Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "For the failing unit test, you can modify the test to skip the check if the warning is there\r\n`assert len(record) == 1`",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-03T19:53:38Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Could you add a single simple unit test for regression and one for multi class?\r\nWould be good to make a very simple rows 4 4 columns dataset and write a simple test, where you can by hand ensure that the correct feature is picked by a simple model.\r\n",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-03T19:55:54Z"
+   },
+   {
+    "author": {
+     "login": "lproth"
+    },
+    "body": "Shape of `current_result[0]` is `(n_classes, n_rows, n_features)`. We're looking to stack the shap values in such a way that every feature gets a column and every fold gets an extra n_rows. hstack gives us a shape `(n_classes, n_folds * n_rows, n_features)`. Using vstack here would give us shape `(n_folds * n_classes, n_rows, n_features)`.",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-10T14:07:51Z"
+   },
+   {
+    "author": {
+     "login": "lproth"
+    },
+    "body": "I can add this. Are you thinking to set it to False by default?",
+    "path": "probatus/utils/arrayfuncs.py",
+    "createdAt": "2021-12-10T14:09:42Z"
+   },
+   {
+    "author": {
+     "login": "lproth"
+    },
+    "body": "It works the same. Probably best to just remove that comment.",
+    "path": "probatus/utils/shap_helpers.py",
+    "createdAt": "2021-12-10T14:11:19Z"
+   },
+   {
+    "author": {
+     "login": "lproth"
+    },
+    "body": "I've fixed this now",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2021-12-10T15:16:34Z"
+   },
+   {
+    "author": {
+     "login": "Matgrb"
+    },
+    "body": "Actually let's remove that, the models have their own ways of handling if wrong labels are passed",
+    "path": "probatus/utils/arrayfuncs.py",
+    "createdAt": "2022-01-06T13:24:47Z"
+   },
+   {
+    "author": {
+     "login": "lproth"
+    },
+    "body": "added, sorry for the delay",
+    "path": "probatus/feature_elimination/feature_elimination.py",
+    "createdAt": "2022-03-01T11:55:47Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This can only be merged when some unit tests are added.",
+    "createdAt": "2023-07-06T17:02:07Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/174"
+ },
+ {
+  "number": 173,
+  "title": "#31 ShapRFECV implement best features set",
+  "body": "This PR addresses issue #31:\r\n\r\n- Automatic selection of reduced features set based on highest value of `validation_AUC - validation_std`.\r\n- Warning to the user if they choose automatic selection instead of manual.\r\n- Implementation of `_support` and `_ranking` attributes, similar to sklearn RFECV.\r\n\r\nI will update the related tests if this solution seems appropriate (current tests are still passing, we just need to add new tests).",
+  "state": "CLOSED",
+  "author": {
+   "login": "eduardo-lourenco"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-04T17:59:26Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/173"
+ },
+ {
+  "number": 172,
+  "title": "#51 Add option to overlap importance on train and test in plot of ShapModelInterpreter",
+  "body": "This PR targets issue #51:\r\n- Adds option to have ShapModelInterpreter plots for both train and test sets in the same graph. \r\n- Updates the tutorial related with model interpretation.\r\n\r\nI will update the related tests if this solution seems appropriate (current tests are still passing, we just need to add new tests).",
+  "state": "CLOSED",
+  "author": {
+   "login": "eduardo-lourenco"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-05T08:51:28Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/172"
+ },
+ {
+  "number": 171,
+  "title": "#150 Return SHAP values with ShapRFECV fit_compute call",
+  "body": "This PR targets issue #150 and comprises the following changes:\r\n\r\n- Return SHAP values with ShapRFECV fit_compute call by including them in the report. \r\n- Add new method to get shap values of a given reduced features set. \r\n- Update tutorial notebook.\r\n\r\nI will update the related tests if this solution seems appropriate (current tests are still passing, we just need to add new tests).",
+  "state": "CLOSED",
+  "author": {
+   "login": "eduardo-lourenco"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-05T08:52:58Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/171"
+ },
+ {
+  "number": 167,
+  "title": "Improve lightgbm logging and fix eval_metrics issue for lightgbm (EarlyStoppingShapRFECV)",
+  "body": "This is an improvement/addition to https://github.com/ing-bank/probatus/pull/164 (merged)\r\n\r\n### Motivation\r\n1. The `verbose` or `verbosity` parameter for `lightgbm` has been deprecated as of `lightgbm 3.3.0` together with `early_stopping_rounds`. We implemented the replacement solution (the `early_stopping` callback) for the latter deprecation in https://github.com/ing-bank/probatus/pull/164, but we did not take care of the validation logging/messages. At the moment these are, by default, logged/printed for every early stopping.\r\n2. There is an issue for either `EarlyStoppingShapRFECV` or `lightgbm` where the specified `eval_metric` isn't used and the validation defaults to the scoring/loss instead.\r\n\r\n### Solution\r\n1. We can use the `lightgbm` `log_evaluation` callback and set the `period=0`. This means the early stopping validation won't be printed, but it is a static solution.\r\n2. We can set `first_metric_only=True` in the `early_stopping` callback, which will only use the first metric, but is a surefire solution to using the specified `eval_metric`. Downside is that this is again a static solution.\r\n\r\n*Both solutions are specific and static for `lightgbm` models*",
+  "state": "MERGED",
+  "author": {
+   "login": "christophermadsen"
+  },
+  "mergedAt": "2021-11-09T11:04:18Z",
+  "closedAt": "2021-11-09T11:04:18Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/167"
+ },
+ {
+  "number": 165,
+  "title": "Temporarily fix tests, disable shap 0.40.0",
+  "body": "Temporarily fix tests, disable shap 0.40.0 since it has missing import in one of the plots",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-10-27T17:51:52Z",
+  "closedAt": "2021-10-27T17:51:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/165"
+ },
+ {
+  "number": 164,
+  "title": "Fix early_stopping_rounds deprecation for LightGBM models",
+  "body": "### Motivation\r\nAs stated in issue https://github.com/ing-bank/probatus/issues/163 `early_stopping_rounds` is deprecated for LightGBM models since `lightgbm==3.3.0`, which has resulted in insuppressible deprecation warnings per fold in the `EarlyStoppingShapRFECV` class.\r\n\r\n### Solution\r\nCheck if the model is a `lightgbm.LGBMModel` and add `lightgbm.early_stopping` as a callback.",
+  "state": "MERGED",
+  "author": {
+   "login": "christophermadsen"
+  },
+  "mergedAt": "2021-10-28T18:32:24Z",
+  "closedAt": "2021-10-28T18:32:24Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/164"
+ },
+ {
+  "number": 162,
+  "title": "Add alpha parameter to plot method of DependencePlotter class",
+  "body": "### Motivation\r\n\r\nThe `shap dependency plot` is highly appreciated for model interpretation, however it can become difficult to analyse due to overlapping data points. \r\n\r\nThis small fix allows the user to specify the transparency of the data points in the plot, which can improve the interpretability of the graph.\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "eduardo-lourenco"
+  },
+  "mergedAt": "2021-10-05T20:17:15Z",
+  "closedAt": "2021-10-05T20:17:15Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/162"
+ },
+ {
+  "number": 158,
+  "title": "Add references to test statistics and cross references",
+  "body": "This PR addresses issues #28 and #40.\r\n\r\n- It adds references to the docstrings of the test statistics functions. Minor fixes are also made to the docstrings in the stat_tests to unify style, fix typos or fix format.\r\n   - Also, wherever they are mentioned across the documentation, they are cross referenced to the page where they are described.\r\n\r\n![image](https://user-images.githubusercontent.com/16015401/129692204-3295aecb-b852-46f5-a9b7-4de3565a3382.png)\r\n\r\n- Add cross references to md files in docs/api and unify style.",
+  "state": "MERGED",
+  "author": {
+   "login": "ami232"
+  },
+  "mergedAt": "2021-08-24T12:25:41Z",
+  "closedAt": "2021-08-24T12:25:42Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/158"
+ },
+ {
+  "number": 156,
+  "title": "Add util function to get SHAP values via CV",
+  "body": "# Motivation\r\n\r\nSHAP values provide an excellent way to estimate model feature importance. The SHAP values tell us how much a feature contributes to (impacts) the model prediction.\r\n\r\nWhen we evaluate model performance, we typically want to know the performance on different data sets:\r\n\r\n* train\r\n* validation (val)\r\n* test\r\n\r\nSimilarly, when we calculate SHAP values, we want to know the impact of the features when the model is applied to different data sets.\r\n\r\nWith the current `shap` API, it is straightforward to calculate SHAP values for train, val, and test sets.\r\n\r\nHowever, most modeling problems involve limited data, so designating both a val and test set is unacceptable, because too little data is left to train the model. Enter cross validation, of course, where there is no hold-out val set, but the validation occurs via CV on the train set.\r\n\r\nWith the current `shap` API, there is no support for calculating SHAP values via CV (e.g. by integration with `sklearn`).\r\n\r\nSo we have three options:\r\n\r\n* Calculate SHAP values on train. But this is as flawed as evaluating model performance on train alone. You will get the importance of features of a model trained and evaluated on the same data, i.e. it is not a fair evaluation.\r\n* Calculate SHAP values on test. This seems like a better choice, but if we are calculating SHAP values as a way of selecting model features, it seems a dangerous choice. Ideally, modeling decisions should never be based on the hold-out test set -- that's why we have val sets and CV after all.\r\n* Calculate SHAP values on train via CV. Sounds ideal! But how?\r\nThis PR provides a helper function to calculate SHAP values via CV.\r\n\r\nPossible contribution to `probatus.utils.shap_helpers` if `probatus` maintainers see value and agree.\r\n\r\n`ShapRFECV` is still the better option overall, but for some users a recursive approach may not be feasible due to computational cost. With `get_shap_cv_value`, user gets the benefit of CV in a non-recursive approach and can then select the `n` top features in more confidence.",
+  "state": "CLOSED",
+  "author": {
+   "login": "rchaves33"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-05T08:56:51Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/156"
+ },
+ {
+  "number": 154,
+  "title": "Add notebook for Grouped data",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-06-16T14:51:56Z",
+  "closedAt": "2021-06-16T14:51:56Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/154"
+ },
+ {
+  "number": 153,
+  "title": "Re-run tutorial for shap model interpreter after fixing bug.",
+  "body": "Run the tutorial notebook and update the SHAP dependency plot.",
+  "state": "MERGED",
+  "author": {
+   "login": "eduardo-lourenco"
+  },
+  "mergedAt": "2021-06-16T14:26:16Z",
+  "closedAt": "2021-06-16T14:26:16Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/153"
+ },
+ {
+  "number": 152,
+  "title": "Fix table",
+  "body": "Closes #151 ",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-06-14T12:59:27Z",
+  "closedAt": "2021-06-14T12:59:27Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/152"
+ },
+ {
+  "number": 149,
+  "title": "Fixed tables in docs. ",
+  "body": "Resolves #141 ",
+  "state": "MERGED",
+  "author": {
+   "login": "anilkumarpanda"
+  },
+  "mergedAt": "2021-05-07T07:34:19Z",
+  "closedAt": "2021-05-07T07:34:19Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/149"
+ },
+ {
+  "number": 148,
+  "title": "Fix catboost bug with categorical data",
+  "body": "Closes #147 ",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-05-04T13:26:10Z",
+  "closedAt": "2021-05-04T13:26:11Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/148"
+ },
+ {
+  "number": 145,
+  "title": "Remove codecov.io",
+  "body": "With the recent [codecov security breach](https://about.codecov.io/security-update/), I release the risk of depending on an external service is not worth the risk.\r\n\r\nIn our case, we have pypi credentials stored as secrets to automate deploys. I'd rather remove codecov that those.\r\n\r\nThat means no code coverage badge until there is an internal solution (with gh actions?), if you accept this PR.\r\n\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-04-30T13:08:03Z",
+  "closedAt": "2021-04-30T13:08:03Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/145"
+ },
+ {
+  "number": 144,
+  "title": "Supply eval_sample_weight for fit in EarlyStoppingShapRFECV",
+  "body": "If using sample weighting for fitting in LGBM, one should also supply it for the evaluation set, otherwise the early stopping condition won't be reached when using `binary_log_loss` as the `eval_metric`. The reason is that training sample weights may increase the training log loss to be generally larger than the validation loss, even though the validation loss stopped improving.\r\n\r\nMost other metrics were not affected, which is why this wasn't caught before.",
+  "state": "MERGED",
+  "author": {
+   "login": "timlod"
+  },
+  "mergedAt": "2021-04-28T11:01:09Z",
+  "closedAt": "2021-04-28T11:01:09Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/144"
+ },
+ {
+  "number": 143,
+  "title": "Explicit import for Shap.",
+  "body": "Closes issue #135",
+  "state": "MERGED",
+  "author": {
+   "login": "eduardo-lourenco"
+  },
+  "mergedAt": "2021-04-22T14:09:05Z",
+  "closedAt": "2021-04-22T14:09:05Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/143"
+ },
+ {
+  "number": 140,
+  "title": "Remove sample_row from probatus",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-04-21T13:08:30Z",
+  "closedAt": "2021-04-21T13:08:30Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/140"
+ },
+ {
+  "number": 139,
+  "title": "Enable use of `sample_weight` for model fitting, fix LGBM + categorical issue",
+  "body": "See #106, #138.\r\n\r\nI have left out the unit tests (for now). I'm not familiar with `pytest` syntax (over unittest which I normally use) and want to make sure that you're fine with the interfaces before testing them. I also noticed that several tests are failing due to using `approximate=True` with LGBM models in shap. I don't know about that, so someone should have a look.\r\n\r\nNote: I also removed the training set from the `EarlyStopping` `eval_set` argument - didn't mention it in any of the commit messages though.",
+  "state": "MERGED",
+  "author": {
+   "login": "timlod"
+  },
+  "mergedAt": "2021-04-18T18:11:41Z",
+  "closedAt": "2021-04-18T18:11:41Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/139"
+ },
+ {
+  "number": 137,
+  "title": "Fix issue with missing histogram",
+  "body": "Closes #136 ",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-04-15T12:17:01Z",
+  "closedAt": "2021-04-15T12:17:01Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/137"
+ },
+ {
+  "number": 132,
+  "title": "Fix issue 131 - support python 3.9",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "JanBargeman"
+  },
+  "mergedAt": "2021-04-14T15:11:04Z",
+  "closedAt": "2021-04-14T15:11:04Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/132"
+ },
+ {
+  "number": 129,
+  "title": "Add error when pipeline is passed",
+  "body": "Closes #128",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-04-13T14:21:54Z",
+  "closedAt": "2021-04-13T14:21:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/129"
+ },
+ {
+  "number": 126,
+  "title": "Missing values autodist",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "gverbock"
+  },
+  "mergedAt": "2021-04-15T07:15:44Z",
+  "closedAt": "2021-04-15T07:15:44Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/126"
+ },
+ {
+  "number": 124,
+  "title": "refactor treebucketer",
+  "body": "Closes #121 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-04-06T07:20:55Z",
+  "closedAt": "2021-04-06T07:20:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/124"
+ },
+ {
+  "number": 120,
+  "title": "Fix failing test pipeline",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-03-30T09:41:55Z",
+  "closedAt": "2021-03-30T09:41:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/120"
+ },
+ {
+  "number": 119,
+  "title": "Fix test pipeline",
+  "body": "",
+  "state": "CLOSED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": null,
+  "closedAt": "2021-03-30T09:22:13Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/119"
+ },
+ {
+  "number": 118,
+  "title": "Fix failing test pipleine",
+  "body": "Fix test pipeline",
+  "state": "CLOSED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": null,
+  "closedAt": "2021-03-30T09:20:46Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/118"
+ },
+ {
+  "number": 116,
+  "title": "Fix issue with empty bins",
+  "body": "Closes #115\r\nCloses #112 \r\n\r\n@gverbock This addresses the PSI issue we discussed.\r\n\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-03-31T13:52:32Z",
+  "closedAt": "2021-03-31T13:52:33Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/116"
+ },
+ {
+  "number": 113,
+  "title": "Add github action that will run unit tests everyday, closes #42",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-03-26T11:11:25Z",
+  "closedAt": "2021-03-26T11:11:25Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/113"
+ },
+ {
+  "number": 111,
+  "title": "bug template update",
+  "body": "example code to show probatus version.",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-03-25T14:23:21Z",
+  "closedAt": "2021-03-25T14:23:22Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/111"
+ },
+ {
+  "number": 109,
+  "title": "Language sprucing",
+  "body": "Dear Probatus Gods, \r\n\r\nI offer you my most humble English services.\r\n\r\nCordially,\r\nSir Dan Esquire",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-03-25T10:37:55Z",
+  "closedAt": "2021-03-25T10:37:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/109"
+ },
+ {
+  "number": 108,
+  "title": "Early stopping in ShapRFECV ",
+  "body": "There are two lines where a classifier is fitted.\r\nThis commit creates a new method that performs the fitting, which can\r\nhelp to add functionality to the fitting step in the future.\r\n\r\nThe initial idea was for `_fit_clf` to be a normal method. However, in\r\nthat case it could not be called as `self._fit_clf` inside\r\n`_get_feature_shap_values_per_fold` because it is a static method and it\r\ndoes not recognize `self`.\r\nThis might not be the best approach, since, for example, when\r\nimplementing the Early Stopping version of ShapRFECV, we might have some\r\narguments inside `self` which we want to access.",
+  "state": "MERGED",
+  "author": {
+   "login": "operte"
+  },
+  "mergedAt": "2021-04-14T14:42:44Z",
+  "closedAt": "2021-04-14T14:42:44Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/108"
+ },
+ {
+  "number": 107,
+  "title": "Fix some typos",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-03-23T08:55:56Z",
+  "closedAt": "2021-03-23T08:55:56Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/107"
+ },
+ {
+  "number": 103,
+  "title": "Add support for passing check_additivity argument",
+  "body": "Closes: #102 \r\n\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-03-16T09:53:41Z",
+  "closedAt": "2021-03-16T09:53:41Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/103"
+ },
+ {
+  "number": 100,
+  "title": "Fix range of styling issues identified by precommit config",
+  "body": "#98 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-03-15T16:56:34Z",
+  "closedAt": "2021-03-15T16:56:34Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/100"
+ },
+ {
+  "number": 99,
+  "title": "Add how to notebook to ensure reproducibility",
+  "body": "Closes #95 ",
+  "state": "MERGED",
+  "author": {
+   "login": "Matgrb"
+  },
+  "mergedAt": "2021-03-15T17:52:08Z",
+  "closedAt": "2021-03-15T17:52:08Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/99"
+ },
+ {
+  "number": 97,
+  "title": "96 dependabot",
+  "body": "Closes #96 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-03-11T13:31:22Z",
+  "closedAt": "2021-03-11T13:31:22Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/probatus/pull/97"
+ }
+]

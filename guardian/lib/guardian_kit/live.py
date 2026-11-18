@@ -87,13 +87,15 @@ def _write(path: Path, text: str) -> None:
         fh.flush()
 
 
-def run(stream, out: Path, title: str, subject: str, model: str, echo=print, label: str = "Ticket") -> int:
+def run(stream, out: Path, title: str, subject: str, model: str, echo=print, label: str = "Ticket",
+        prefix: str = "") -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     start = time.time()
     steps: list[str] = []
 
     def page(body: str) -> str:
-        return f"# {title}\n\n> **{label}:** {subject}\n\n{body}\n"
+        section = f"# {title}\n\n> **{label}:** {subject}\n\n{body}\n"
+        return f"{prefix.rstrip()}\n\n---\n\n{section}" if prefix.strip() else section
 
     lock = threading.Lock()
     done = threading.Event()
@@ -164,5 +166,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--subject", default="")
     ap.add_argument("--model", default="")
     ap.add_argument("--label", default="Ticket")
+    ap.add_argument("--prefix-file", help="keep this Markdown above the live section (earlier results)")
     a = ap.parse_args(argv)
-    return run(sys.stdin, Path(a.out), a.title, a.subject, a.model, echo=lambda s: print(s, flush=True), label=a.label)
+    return run(sys.stdin, Path(a.out), a.title, a.subject, a.model, echo=lambda s: print(s, flush=True), label=a.label,
+               prefix=Path(a.prefix_file).read_text(encoding="utf-8") if a.prefix_file else "")

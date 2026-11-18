@@ -1,0 +1,1621 @@
+[
+ {
+  "number": 125,
+  "title": "Fix Example rendering",
+  "body": "The rendering of examples in the documentation did not work correctly, for example: https://ing-bank.github.io/skorecard/api/linear_model/LogisticRegression/#skorecard.linear_model.LogisticRegression.fit\r\n\r\nI believe this is because on those page the proper marking of three backticks followed by python was not in place.",
+  "state": "OPEN",
+  "author": {
+   "login": "mvhensbergen"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [
+   {
+    "author": {
+     "login": "mvhensbergen"
+    },
+    "body": "Hello, I guess this repo is no longer maintained? If so I will just close the PR on my side :-) ",
+    "createdAt": "2026-02-26T08:29:44Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Approved from my side, but I no longer work at ING, so I can't merge.\r\n\r\nThanks for the contribution though!",
+    "createdAt": "2026-02-26T08:32:27Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/125"
+ },
+ {
+  "number": 124,
+  "title": "Add Siyu Yan to Contributing list",
+  "body": "This PR adds my name to the CONTRIBUTING.md file as part of the tutorial. Happy to contribute! 🚀\r\n",
+  "state": "CLOSED",
+  "author": {
+   "login": "SiyuYan141"
+  },
+  "mergedAt": null,
+  "closedAt": "2025-04-18T16:33:47Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Thanks for your contribution. I guess it was good practice? :)",
+    "createdAt": "2025-04-18T16:33:47Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/124"
+ },
+ {
+  "number": 121,
+  "title": "Fix automated unittests",
+  "body": null,
+  "state": "CLOSED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": null,
+  "closedAt": "2026-04-04T20:23:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/121"
+ },
+ {
+  "number": 120,
+  "title": "Update numpy requirement from <2.0.0,>=1.19.5 to >=1.19.5,<3.0.0",
+  "body": "Updates the requirements on [numpy](https://github.com/numpy/numpy) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/numpy/numpy/releases\">numpy's releases</a>.</em></p>\n<blockquote>\n<h2>2.1.0 (Aug 18, 2024)</h2>\n<h1>NumPy 2.1.0 Release Notes</h1>\n<p>NumPy 2.1.0 provides support for the upcoming Python 3.13 release and\ndrops support for Python 3.9. In addition to the usual bug fixes and\nupdated Python support, it helps get us back into our usual release\ncycle after the extended development of 2.0. The highlights for this\nrelease are:</p>\n<ul>\n<li>Support for the array-api 2023.12 standard.</li>\n<li>Support for Python 3.13.</li>\n<li>Preliminary support for free threaded Python 3.13.</li>\n</ul>\n<p>Python versions 3.10-3.13 are supported in this release.</p>\n<h2>New functions</h2>\n<h3>New function <code>numpy.unstack</code></h3>\n<p>A new function <code>np.unstack(array, axis=...)</code> was added, which splits an\narray into a tuple of arrays along an axis. It serves as the inverse of\n[numpy.stack]{.title-ref}.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26579\">gh-26579</a>)</p>\n<h2>Deprecations</h2>\n<ul>\n<li>\n<p>The <code>fix_imports</code> keyword argument in <code>numpy.save</code> is deprecated.\nSince NumPy 1.17, <code>numpy.save</code> uses a pickle protocol that no longer\nsupports Python 2, and ignored <code>fix_imports</code> keyword. This keyword\nis kept only for backward compatibility. It is now deprecated.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26452\">gh-26452</a>)</p>\n</li>\n<li>\n<p>Passing non-integer inputs as the first argument of\n[bincount]{.title-ref} is now deprecated, because such inputs are\nsilently cast to integers with no warning about loss of precision.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/27076\">gh-27076</a>)</p>\n</li>\n</ul>\n<h2>Expired deprecations</h2>\n<ul>\n<li>\n<p>Scalars and 0D arrays are disallowed for <code>numpy.nonzero</code> and\n<code>numpy.ndarray.nonzero</code>.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26268\">gh-26268</a>)</p>\n</li>\n<li>\n<p><code>set_string_function</code> internal function was removed and\n<code>PyArray_SetStringFunction</code> was stubbed out.</p>\n</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/numpy/numpy/commit/2f7fe64b8b6d7591dd208942f1cc74473d5db4cb\"><code>2f7fe64</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27236\">#27236</a> from charris/prepare-2.1.0</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/b6f434f852e9d1ed4f7de9a3a465b38171d54a61\"><code>b6f434f</code></a> REL: Prepare for the NumPy 2.1.0 release [wheel build]</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/3cf93948797fb81fc251c26cb90d6c44f8374c54\"><code>3cf9394</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27234\">#27234</a> from charris/backport-25984</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/7443dcc915fea1e905f354da511e9e60da82e19c\"><code>7443dcc</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27233\">#27233</a> from charris/backport-27223</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/85b1cab2ad5f418cca485042478622ce13a497a7\"><code>85b1cab</code></a> BUG: Allow fitting of degree zero polynomials with Polynomial.fit</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/395a81dee5be52b2acff817e6f16652d23181fc3\"><code>395a81d</code></a> DOC: reword discussion about shared arrays to hopefully be clearer</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/5af2e965a02137cd05706d8d395d8263f395f7c7\"><code>5af2e96</code></a> Move NUMUSERTYPES thread safety discussion to legacy DType API docs</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/d902c24b684e8ba5370a160a375beaa77bae5032\"><code>d902c24</code></a> DOC: add docs on thread safety in NumPy</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/c080180fabc1f8fcde14c27e3df2de8fcbe7cf03\"><code>c080180</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27229\">#27229</a> from charris/backport-27226</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/44ce7e8f7b43c1045ad78eecaac0435fff491fae\"><code>44ce7e8</code></a> BUG: Fix <code>PyArray_ZeroContiguousBuffer</code> (resize) with struct dtypes</li>\n<li>Additional commits viewable in <a href=\"https://github.com/numpy/numpy/compare/v1.19.5...v2.1.0\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "OPEN",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/120"
+ },
+ {
+  "number": 119,
+  "title": "Update numpy requirement from <2.0.0,>=1.19.5 to >=1.19.5,<3.0.0",
+  "body": "Updates the requirements on [numpy](https://github.com/numpy/numpy) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/numpy/numpy/releases\">numpy's releases</a>.</em></p>\n<blockquote>\n<h2>v2.0.1</h2>\n<h1>NumPy 2.0.1 Release Notes</h1>\n<p>NumPy 2.0.1 is a maintenance release that fixes bugs and regressions\ndiscovered after the 2.0.0 release. NumPy 2.0.1 is the last planned\nrelease in the 2.0.x series, 2.1.0rc1 should be out shortly.</p>\n<p>The Python versions supported by this release are 3.9-3.12.</p>\n<p><strong><em>NOTE:</em></strong>  Do not use the GitHub generated &quot;Source code&quot; files listed in the &quot;Assets&quot;, they are garbage.</p>\n<h2>Improvements</h2>\n<h3><code>np.quantile</code> with method <code>closest_observation</code> chooses nearest even order statistic</h3>\n<p>This changes the definition of nearest for border cases from the nearest\nodd order statistic to nearest even order statistic. The numpy\nimplementation now matches other reference implementations.</p>\n<p>(<a href=\"https://redirect.github.com/numpy/numpy/pull/26656\">gh-26656</a>)</p>\n<h2>Contributors</h2>\n<p>A total of 15 people contributed to this release. People with a &quot;+&quot; by\ntheir names contributed a patch for the first time.</p>\n<ul>\n<li><a href=\"https://github.com/vahidmech\"><code>@​vahidmech</code></a> +</li>\n<li>Alex Herbert +</li>\n<li>Charles Harris</li>\n<li>Giovanni Del Monte +</li>\n<li>Leo Singer</li>\n<li>Lysandros Nikolaou</li>\n<li>Matti Picus</li>\n<li>Nathan Goldbaum</li>\n<li>Patrick J. Roddy +</li>\n<li>Raghuveer Devulapalli</li>\n<li>Ralf Gommers</li>\n<li>Rostan Tabet +</li>\n<li>Sebastian Berg</li>\n<li>Tyler Reddy</li>\n<li>Yannik Wicke +</li>\n</ul>\n<h2>Pull requests merged</h2>\n<p>A total of 24 pull requests were merged for this release.</p>\n<ul>\n<li><a href=\"https://redirect.github.com/numpy/numpy/pull/26711\">#26711</a>: MAINT: prepare 2.0.x for further development</li>\n<li><a href=\"https://redirect.github.com/numpy/numpy/pull/26792\">#26792</a>: TYP: fix incorrect import in <code>ma/extras.pyi</code> stub</li>\n<li><a href=\"https://redirect.github.com/numpy/numpy/pull/26793\">#26793</a>: DOC: Mention '1.25' legacy printing mode in <code>set_printoptions</code></li>\n<li><a href=\"https://redirect.github.com/numpy/numpy/pull/26794\">#26794</a>: DOC: Remove mention of NaN and NAN aliases from constants</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/numpy/numpy/commit/4c9f4316aaf8e80d9d18f089d1267d9cd74d0192\"><code>4c9f431</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/27000\">#27000</a> from charris/prepare-2.0.1</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/0e70e003121b4530fd32294f5cf953b1b400dcc7\"><code>0e70e00</code></a> REL: Prepare for the NumPy 2.0.1 release [wheel build]</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/4d10ffcaab66ce47fc730034858cba9a95b359ce\"><code>4d10ffc</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26995\">#26995</a> from charris/backport-26985</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/764b6674912542b7b89d6faf0394e10049ed91d0\"><code>764b667</code></a> BUG: Add object cast to avoid warning with limited API</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/9be6ad64c03ce91395fc3f6ee8d25f5e09174869\"><code>9be6ad6</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26971\">#26971</a> from charris/backport-26935</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/6d950e9af15d52c47f8e31141b206808fd665b72\"><code>6d950e9</code></a> BUG: fix f2py tests to work with v2 API</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/89630c07a7c2af19c719453f6839ee7e009ed90d\"><code>89630c0</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26962\">#26962</a> from charris/backport-26919</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/88fa84092921dd5f9f41d680ca2b00aedf4ab40e\"><code>88fa840</code></a> TST: Apply test suggestion by Nathan for rlstrip fixes</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/a9da01e11717f83bcb96a01d1ebed132f3cb938d\"><code>a9da01e</code></a> BUG,MAINT: Fix utf-8 character stripping memory access</li>\n<li><a href=\"https://github.com/numpy/numpy/commit/6afbbf8f3c8efa3c5c480e922a4904821e43812a\"><code>6afbbf8</code></a> Merge pull request <a href=\"https://redirect.github.com/numpy/numpy/issues/26963\">#26963</a> from charris/backport-26930</li>\n<li>Additional commits viewable in <a href=\"https://github.com/numpy/numpy/compare/v1.19.5...v2.0.1\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-08-17T23:46:27Z",
+  "comments": [
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2024-08-17T23:46:29Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/119"
+ },
+ {
+  "number": 118,
+  "title": "Update requirements, python version and dependencies",
+  "body": "This is probably going to be a big PR. It'll involve:\r\n- [x] update requirements\r\n- [x] drop python version 3.8, add python version 3.12\r\n- [x] update pyproject.toml (project management script)\r\n- [x] update Github actions scripts (also add dependabot) \r\n- [x] update precommits\r\n- [x] update test, replace deprecated code, remove/replace deactivated code\r\n\r\nBefore this can be closed a lot of code is still going to be updated such that it works with latest versions of packages it depends on. For example scikit learn deprecated parts of the code we depend on, so it needs an update.\r\n\r\nThings to consider for another PR:\r\n- [ ] (reconsider or better integrate optbinning?)\r\n- [ ] (consider replacing/wrapping parts of the code by other tools who do it better/became new industry standard?)",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2024-08-17T23:42:40Z",
+  "closedAt": "2024-08-17T23:42:40Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@adri0 or @PaulZhutovsky could you perhaps approve it? Now it should work better and allow us to release an updated version.",
+    "createdAt": "2024-07-27T17:21:08Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/118"
+ },
+ {
+  "number": 116,
+  "title": "fix selection of best categories bucketers.py",
+  "body": "Currently, when encoding_method == \"ordered\" the features are ordered based on the proportion of events in the target variable in ascending order.\r\n\r\nIdeally, we would like to keep the categories with highest proportion of events separately, and those with lowest volume of events, then to be dropped\r\n\r\nby doing \r\n\r\nnormalized_counts = normalized_counts[-self.max_n_categories:]\r\n\r\nwe ensure to keep the top frequent categories",
+  "state": "OPEN",
+  "author": {
+   "login": "josecaloca"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/116"
+ },
+ {
+  "number": 112,
+  "title": "Solve optional dependencies & __version__",
+  "body": "Solves the issues stated in #110 #111",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-08-08T12:19:16Z",
+  "closedAt": "2023-08-08T12:19:16Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@anilkumarpanda could you please review?",
+    "createdAt": "2023-08-03T11:35:05Z"
+   },
+   {
+    "author": {
+     "login": "anilkumarpanda"
+    },
+    "body": "Done. Thanks for the PR.",
+    "createdAt": "2023-08-08T12:19:31Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/112"
+ },
+ {
+  "number": 107,
+  "title": "Create cronjob_unit_tests.yml",
+  "body": null,
+  "state": "CLOSED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-08-17T23:45:34Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "See #106 ",
+    "createdAt": "2023-06-20T04:59:54Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Merged into main via https://github.com/ing-bank/skorecard/pull/118",
+    "createdAt": "2024-08-17T23:46:02Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/107"
+ },
+ {
+  "number": 105,
+  "title": "Align release version + small fix",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-19T07:28:42Z",
+  "closedAt": "2023-06-19T07:28:42Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/105"
+ },
+ {
+  "number": 104,
+  "title": "newer versions of dash, pandas #96 reopened",
+  "body": "I could not get rid of the merge errors in #96 and had to issue a new PR.  This one should now be fairly easy to integrate.",
+  "state": "MERGED",
+  "author": {
+   "login": "Dronakurl"
+  },
+  "mergedAt": "2023-06-18T06:03:17Z",
+  "closedAt": "2023-06-18T06:03:17Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@Dronakurl thank you for your contribution, looks great!",
+    "createdAt": "2023-06-18T06:02:19Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/104"
+ },
+ {
+  "number": 103,
+  "title": "Update publish_pypi.yml",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-16T10:41:42Z",
+  "closedAt": "2023-06-16T10:41:43Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/103"
+ },
+ {
+  "number": 102,
+  "title": "Update publish_pypi.yml",
+  "body": "fix build upload",
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-16T09:57:14Z",
+  "closedAt": "2023-06-16T09:57:15Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/102"
+ },
+ {
+  "number": 101,
+  "title": "Update precommits, update Python version, fix mkdocs, refactoring",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "ReinierKoops"
+  },
+  "mergedAt": "2023-06-16T09:00:05Z",
+  "closedAt": "2023-06-16T09:00:05Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "See #100 #97 #94 ",
+    "createdAt": "2023-06-11T14:38:23Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/101"
+ },
+ {
+  "number": 98,
+  "title": "Bug fix for woe_1d, plus minor cosmetic and test issues",
+  "body": "A few minor fixes:\r\n\r\n* The woe_1d function wasn't running y.reset_index() in the case where its y input was already a pd.Series. This meant that it would return incorrect values when indexes in X and y were noncontinuous. Added a check for this condition to tests/test_metrics.py.\r\n* The scikit-learn WOEEncoder uses ln(%bad / %good) instead of ln(%good / %bad) for some reason, which flips all of the signs. A previous fix switched the computation of WOE in the summary table to match. However, this fix caused the IV values to be negative in summary tables, which I found surprising. I added an abs() call to the IV calculation to correct this cosmetic defect.\r\n* Tests were failing in Pandas 2.0 due to the use of DataFrame.append, which has been removed. I fixed it by changing this to a pd.concat call.\r\n\r\n\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "lorenjan"
+  },
+  "mergedAt": "2023-07-06T11:01:02Z",
+  "closedAt": "2023-07-06T11:01:02Z",
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Hi @lorenjan , thank you for your PR! Could you sync your changes with the master branch?",
+    "createdAt": "2023-06-18T06:04:40Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Fix is in the process of being merged #109",
+    "createdAt": "2023-07-06T08:30:00Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/98"
+ },
+ {
+  "number": 96,
+  "title": "Update code to newer versions of dash, pandas",
+  "body": "I tried skorecard and found the the newer package versions are not supported. I fixed the few places where the code did cause errors or warnings:\r\n- Since pandas 2.0, the `append` method is no longer used\r\n- Newer versions of dash mark `dash_html_components` as deprecated\r\n- Included a try..except-block to acommodate for older dash versions\r\n- Some imports where not needed and deleted\r\n\r\nI tested on my machine with python 3.10, but also on a container with 3.7 and the oldest versions allowed in setup.py.",
+  "state": "CLOSED",
+  "author": {
+   "login": "Dronakurl"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-06-17T22:03:07Z",
+  "comments": [
+   {
+    "author": {
+     "login": "Dronakurl"
+    },
+    "body": "I just realized that skorecard relies on python 3.6. I also tested on python 3.6 \r\n",
+    "createdAt": "2023-04-22T09:16:12Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "Hi @Dronakurl , great work, thanks for your PR! Next Thursday(15th of June) Skorecard will be updated to include this: https://github.com/ing-bank/skorecard/pull/101 (Drop support for Python 3.6, 3.7, add support for python 3.11) this means some of our changes overlap. I'd like to suggest you to modify your changes so that it does not conflict with that PR. Then ill approve it.\r\n\r\nThe changes that should be kept are:\r\n- update pandas (and replace append)\r\n- update dash (and remove dash_html_components)\r\n\r\nThe relevant packages have been moved from setup.py to pyproject.toml ",
+    "createdAt": "2023-06-11T15:16:13Z"
+   },
+   {
+    "author": {
+     "login": "Dronakurl"
+    },
+    "body": "Hi @ReinierKoops,\r\nI updated the PR. Did it work? ",
+    "createdAt": "2023-06-11T20:46:56Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@Dronakurl thanks again! It ran the pre-commit hooks and seemed okay! After #101 is merged (Thursday), your pull request will be inspected again (since #101 changes to many files to make it possible for me to see your differences properly in this new context) and merged if it looks good. Otherwise I'll let you know specifically what to change. Many thanks",
+    "createdAt": "2023-06-12T05:37:41Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "The PR #101 is delayed by one week (next Thursday)",
+    "createdAt": "2023-06-15T19:40:47Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@Dronakurl The PR has been merged. Could you ensure the code is in line with the main branch of Skorecard?",
+    "createdAt": "2023-06-16T09:05:53Z"
+   },
+   {
+    "author": {
+     "login": "Dronakurl"
+    },
+    "body": "I kept getting merge errors so I reset my fork to where I started to get the same history as you now have. But somehow, this pull request was now closed. I sent a new one #104, which should not cause problems for merging",
+    "createdAt": "2023-06-17T22:09:04Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/96"
+ },
+ {
+  "number": 93,
+  "title": "Updated setup.py file for minor release",
+  "body": "Updated setup.py file for minor release 1.6.5",
+  "state": "MERGED",
+  "author": {
+   "login": "anilkumarpanda"
+  },
+  "mergedAt": "2023-03-03T14:58:08Z",
+  "closedAt": "2023-03-03T14:58:08Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/93"
+ },
+ {
+  "number": 91,
+  "title": "Vif reporting",
+  "body": "#86",
+  "state": "OPEN",
+  "author": {
+   "login": "dlaprins"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "This I think should be removed if its working.",
+    "path": "skorecard/skorecard.py",
+    "createdAt": "2023-06-12T05:47:52Z"
+   },
+   {
+    "author": {
+     "login": "ReinierKoops"
+    },
+    "body": "@dlaprins looks nice! Could you write tests for the added code?",
+    "createdAt": "2023-06-12T05:48:13Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/91"
+ },
+ {
+  "number": 90,
+  "title": "Suppressor",
+  "body": "Fix for #85:\r\nThe Skorecard() fit method now issues a warning in case there is a coefficient with an unexpected (i.e., negative) sign. \r\n\r\nNote that coefficients are always expected to be positive when bucketing and WoE-encoding variables, since the conventions used for WoE are such that higher WoE implies higher predicted probability of target.  ",
+  "state": "MERGED",
+  "author": {
+   "login": "dlaprins"
+  },
+  "mergedAt": "2023-02-23T14:47:47Z",
+  "closedAt": "2023-02-23T14:47:47Z",
+  "comments": [
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Thanks!",
+    "createdAt": "2023-02-23T16:42:26Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/90"
+ },
+ {
+  "number": 88,
+  "title": "Modified bucket_table() to compute WoE consistent with category_encoder",
+  "body": "#87 \r\nHard-coded WoE calculation in bucket_table to be consistent with the category_encoder  (v2.5.1) implementation of WoE. \r\n\r\nA direct call on the WOEEncoder object might be preferable, but seems inconvenient given the currrent code setup. ",
+  "state": "MERGED",
+  "author": {
+   "login": "dlaprins"
+  },
+  "mergedAt": "2023-01-20T13:10:52Z",
+  "closedAt": "2023-01-20T13:10:52Z",
+  "comments": [
+   {
+    "author": {
+     "login": "anilkumarpanda"
+    },
+    "body": "Hey @dlaprins thanks for the PR. Can you write an unit test to test you change ?",
+    "createdAt": "2023-01-12T08:51:06Z"
+   },
+   {
+    "author": {
+     "login": "sbjelogr"
+    },
+    "body": "Note that the numerator and denominator of the WoE formula are decimals: changing epsilon to 1 will mess up heavily the WoE calculation. The very small number is there to ensure that there is no division by zero.\r\n",
+    "path": "skorecard/reporting/report.py",
+    "createdAt": "2023-01-12T09:23:48Z"
+   },
+   {
+    "author": {
+     "login": "sbjelogr"
+    },
+    "body": "The WoE is normally calculated in the following function\r\n\r\n```python\r\nfrom skorecard.metrics.metrics import woe_1d\r\n```\r\n\r\nand then this is propagated through calculations (see the `WoEEncoder`). \r\nThis should guarantee consistency across the package. I would suggest using it in here",
+    "path": "skorecard/reporting/report.py",
+    "createdAt": "2023-01-12T09:26:33Z"
+   },
+   {
+    "author": {
+     "login": "dlaprins"
+    },
+    "body": "Hi Sandro, thank you very much for your comments, I am glad to see you are still looking after the project.\r\n \r\nI was under the impression that WoEEncoder was deprecated (line 18 of _WoEencoder.py) in favor of category_encoders WOEEncoder , which is the one in use in the Skorecard class (line 216 of skorecard.py).\r\nThis is also why I set epsilon=1: I agree with you that it makes a lot more sense to have it small, but skorecard.py uses the default value for category_encoders' WOEEncoder, namely \"regularisation=1\" (line 77 of  \r\n[https://github.com/scikit-learn-contrib/category_encoders/blob/master/category_encoders/woe.py](url)).  \r\n\r\n(although, note that the way that epsilon is implemented in the regularisation for category_encoders is to add it to the number of events, rather than the event percentage: this mitigates the impact it has on the WoE substantially). \r\n\r\nWould it be your suggestion to continue working with category_encoder's WOEEncoder, or with skorecard's WoEEncoder? If continuing with category_encoders' WOEEncoder, a remedy for the regularisation would be to set it back to 10**(-5) in bucket_table(), but then to also alter the call to WOEEncoder in the skorecard.py.   ",
+    "path": "skorecard/reporting/report.py",
+    "createdAt": "2023-01-12T11:56:08Z"
+   },
+   {
+    "author": {
+     "login": "sbjelogr"
+    },
+    "body": "Hi @dlaprins, you are correct. Indeed the epsilon is added at denominator and numerator level, not in the ratio.\r\nAnd after checking a bit more, I noticed that I missed this deprecation of WoEEncoder that happened in the issue #53.\r\n\r\nAs this method is being deprecated, it makes sense to keep the change you suggest in this PR.\r\n",
+    "path": "skorecard/reporting/report.py",
+    "createdAt": "2023-01-12T20:27:34Z"
+   },
+   {
+    "author": {
+     "login": "sbjelogr"
+    },
+    "body": "As pointed in the comment below, epsilon=1 makes the calculations compatible with the WoEEncoder transformer. ",
+    "path": "skorecard/reporting/report.py",
+    "createdAt": "2023-01-12T20:28:49Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/88"
+ },
+ {
+  "number": 83,
+  "title": "Added get_statistics variable to buckets",
+  "body": "Added a boolean variable to bucketers to turn off calculation of bucket tables and summary. These are not called on in the BucketingProcess class, nor by the Skorecard class. Turning off these redundant calculations results in a speed increase. ",
+  "state": "MERGED",
+  "author": {
+   "login": "dlaprins"
+  },
+  "mergedAt": "2022-06-08T12:13:52Z",
+  "closedAt": "2022-06-08T12:13:52Z",
+  "comments": [
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Thanks for the contribution. And yes, this makes sense!\r\n",
+    "createdAt": "2022-06-08T12:07:17Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Released to pypi also https://github.com/ing-bank/skorecard/releases/tag/v1.6.4 ",
+    "createdAt": "2022-06-08T12:26:25Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/83"
+ },
+ {
+  "number": 82,
+  "title": "Add reference to blogpost introducing skorecard",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2022-01-26T18:22:46Z",
+  "closedAt": "2022-01-26T18:22:46Z",
+  "comments": [
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "@orchardbirds the blogpost introducing skorecard is published :) ",
+    "createdAt": "2021-12-24T13:13:30Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Btw, I just pushed https://github.com/ing-bank/skorecard/commit/e70f8fcc11743da93064695e7de7c65d8599b375 to `master`.. sorry, meant for it to be a PR..",
+    "createdAt": "2021-12-24T13:50:14Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "@orchardbirds bump :) ",
+    "createdAt": "2022-01-02T19:53:21Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "uiteindelijk ;)",
+    "createdAt": "2022-01-26T18:23:31Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/82"
+ },
+ {
+  "number": 81,
+  "title": "80 bucket info",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-24T14:15:12Z",
+  "closedAt": "2021-11-24T14:15:13Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/81"
+ },
+ {
+  "number": 79,
+  "title": "add args to weightplot docstring",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-23T11:00:25Z",
+  "closedAt": "2021-11-23T11:00:25Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/79"
+ },
+ {
+  "number": 78,
+  "title": "Separate index from readme",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-23T10:54:21Z",
+  "closedAt": "2021-11-23T10:54:21Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/78"
+ },
+ {
+  "number": 77,
+  "title": "Images not displaying",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-23T09:08:26Z",
+  "closedAt": "2021-11-23T09:08:26Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/77"
+ },
+ {
+  "number": 76,
+  "title": "try link",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-22T14:57:52Z",
+  "closedAt": "2021-11-22T14:57:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/76"
+ },
+ {
+  "number": 75,
+  "title": "Docs cleanup",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-22T13:02:37Z",
+  "closedAt": "2021-11-22T13:02:37Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/75"
+ },
+ {
+  "number": 73,
+  "title": "72 woe",
+  "body": "Fixed #72 ",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-18T10:03:24Z",
+  "closedAt": "2021-11-18T10:03:24Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/73"
+ },
+ {
+  "number": 70,
+  "title": "Dan test",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-11-16T10:06:17Z",
+  "closedAt": "2021-11-16T10:06:17Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/70"
+ },
+ {
+  "number": 67,
+  "title": "Update README.md",
+  "body": null,
+  "state": "CLOSED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": null,
+  "closedAt": "2021-09-30T14:42:42Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "haha, checking why the pipelines were failing. Looks like a new release of scikitlearn was causing the following estimator checks to fail:\r\n\r\n-  `estimator_checks.check_sample_weights_pandas_series`\r\n- ` estimator_checks.check_sample_weights_list`\r\n\r\nAs our bucketers do not accept a `sample_weight` argument. I've removed these 2 checks from the tests",
+    "createdAt": "2021-10-01T06:08:34Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/67"
+ },
+ {
+  "number": 66,
+  "title": "49 add random state",
+  "body": "Closes #49 ",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-09-30T14:52:25Z",
+  "closedAt": "2021-09-30T14:52:25Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "Added random state attributes to the `Skorecard` class. It works for bucketers, pipelines and `BucketingProcess`",
+    "createdAt": "2021-09-30T13:43:15Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/66"
+ },
+ {
+  "number": 65,
+  "title": "Added Weight plot",
+  "body": "With reference to #58 .",
+  "state": "MERGED",
+  "author": {
+   "login": "satya-pattnaik"
+  },
+  "mergedAt": "2021-11-16T08:55:25Z",
+  "closedAt": "2021-11-16T08:55:25Z",
+  "comments": [
+   {
+    "author": {
+     "login": "satya-pattnaik"
+    },
+    "body": "@orchardbirds How do I add reviewers here?",
+    "createdAt": "2021-09-27T16:56:03Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "Don't forget to import `weight_plot` as well",
+    "path": "skorecard/reporting/plotting.py",
+    "createdAt": "2021-09-28T12:14:42Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "To be honest, I'm not a fan of these column names. Maybe something like `conf_interval_0.025` etc. ",
+    "path": "skorecard/reporting/plotting.py",
+    "createdAt": "2021-09-28T12:16:11Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "Thanks for the changes! I am actually on paternity leave right now so don't have time to review. I will in November, however. Sorry for the delay, but I wanted to let you know :)",
+    "createdAt": "2021-10-19T13:08:57Z"
+   },
+   {
+    "author": {
+     "login": "satya-pattnaik"
+    },
+    "body": "> Thanks for the changes! I am actually on paternity leave right now so don't have time to review. I will in November, however. Sorry for the delay, but I wanted to let you know :)\r\n\r\nThanks for letting me know @orchardbirds. Please take your time. :-)",
+    "createdAt": "2021-10-19T16:04:21Z"
+   },
+   {
+    "author": {
+     "login": "satya-pattnaik"
+    },
+    "body": "Thanks @orchardbirds .",
+    "createdAt": "2021-11-16T12:27:20Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/65"
+ },
+ {
+  "number": 64,
+  "title": "cleaner docstrings and code",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-09-22T13:32:56Z",
+  "closedAt": "2021-09-22T13:32:56Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/64"
+ },
+ {
+  "number": 63,
+  "title": "Documentation improvements",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-09-21T12:56:38Z",
+  "closedAt": "2021-09-21T12:56:38Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/63"
+ },
+ {
+  "number": 61,
+  "title": "allow woe plotting in Skorecard.py",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-09-21T08:47:38Z",
+  "closedAt": "2021-09-21T08:47:38Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/61"
+ },
+ {
+  "number": 59,
+  "title": "enable WoE plotting for bucketers",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-09-21T07:08:09Z",
+  "closedAt": "2021-09-21T07:08:09Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "Closes #6 ",
+    "createdAt": "2021-09-20T16:31:50Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/59"
+ },
+ {
+  "number": 57,
+  "title": "54-missing treatments",
+  "body": "Closes #54 , ignore the branch name.\r\n\r\nMAN this was trickier than expected. Because we want to keep the missing values everywhere, had to do some little tricks.",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-09-09T14:57:39Z",
+  "closedAt": "2021-09-09T14:57:39Z",
+  "comments": [
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Remove commented lines",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-09-09T11:27:47Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "The `.astype(int)` is there for a reason, we had some weird bugs/edge cases and this ensures the buckets list always contain ints. Perhaps something like this could work?\n\n```python\ndef to_int(x):\n    if not np.isnan(x):\n        return int(x)\n    else:\n        return x\n\nbuckets = [to_int(x) for x in buckets]\n```\n\n",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-09-09T11:31:16Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Perhaps add a final clause like\n\n```python\nelse:\n    raise AssertionError(f\"Invalid missing treatment '{self.missing_treatment}' specified\")\n```\n",
+    "path": "skorecard/bucketers/base_bucketer.py",
+    "createdAt": "2021-09-09T11:34:48Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "done for `passthrough` method, will add an issue to continue this theme",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-09-09T14:51:11Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "done",
+    "path": "skorecard/bucketers/base_bucketer.py",
+    "createdAt": "2021-09-09T14:51:19Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "added",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-09-09T14:51:29Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/57"
+ },
+ {
+  "number": 56,
+  "title": "Validate kwargs for certain bucketers",
+  "body": "Closes #55 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-09-08T14:18:38Z",
+  "closedAt": "2021-09-08T14:18:38Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/56"
+ },
+ {
+  "number": 53,
+  "title": "Improve scikit learn compat",
+  "body": "This is a huge PR (~1000 lines of code across 30 files changes, excluding notebooks). It includes several breaking changes, warranting a `v2.0` upgrade imho. Commits in this PR address multiple issues, fixes quite some bugs, and overall ensure scikit-learn compatibility of different transformers and estimators in `skorecard`. \r\n\r\nIt should fix #50, #47  and #48 \r\n\r\nAn overview of the changes:\r\n\r\n## Changes\r\n\r\n- `BucketingProcess` now does not enforce categorical features to be prebucketed, as it is not necessary.\r\n- `skorecard.preprocessing.WoEEncoder` has now been deprecated in favor of `category_encoders.woe.WOEEncoder`, which is a new dependency.\r\n\r\nThese are breaking changes:\r\n\r\n- `skorecard.Skorecard()` dropped support for `cat_columns` and `selected_features`. To make sure to bucket categoricals, supply a `bucketing` estimator.  If not supplied, categorical will be auto-detected. A new `variables` parameter will select features to be used in the `LogisticRegression`. A new `calculate_stats` controls if the `LogisticRegression` will calculate standards errors or not, and is set to False (previously this was always done).\r\n- `skorecard.Skorecard()` has an updated default pipeline that will be used if no pipeline is specified. Tweaked some parameters in the bucketing and the detecting of categorical vs numerical columns.\r\n- `skorecard.linear_model.LogisticRegression` now has a new `calculate_stats` parameter that control whether or not to calculate (expensive) statistics during `.fit()`. Defaults to False.\r\n- `skorecard.bucketers.DecisionTreeBucketer()` has a new parameter `dt_kwargs`, with keyword arguments passed to the `DecisionTreeClassifier`. Previously kwargs were directly passed.\r\n- `skorecard.bucketers.OptimalBucketer()` has a new parameter `ob_kwargs` with keyword arguments passed to `optimalbinning.OptimalBinning`. Also several new parameters exposed directly, see docs.\r\n- Input validation on many classes have now been moved to the `fit()` method, and many internal class variables now have a trailing underscore (`_`) to signal they are determined during fit. This might cause errors to occur later in your skorecard pipeline. Reason for this is to properly support estimator cloning in scikit-learn, so you can use skorecard estimators in grid searches and cross validations.\r\n\r\n## Added\r\n\r\n- Improved error handling and input validation in many classes\r\n- Added support for numpy matrixes, which are converted gracefully to `pd.DataFrame()`\r\n- Expanded unit tests to use scikit learns suite of checks in [`check_estimator`](http://scikit-learn.org/stable/modules/generated/sklearn.utils.estimator_checks.check_estimator.html)\r\n ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-09-03T07:49:20Z",
+  "closedAt": "2021-09-03T07:49:20Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "can we use sklearn's `check_X_y` for this?",
+    "path": "skorecard/bucketers/base_bucketer.py",
+    "createdAt": "2021-09-02T11:43:42Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "\"Must\" not Much",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-09-02T11:45:09Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "Maybe add something here like \"check your target distribution contains more than 1 class\"",
+    "path": "skorecard/metrics/metrics.py",
+    "createdAt": "2021-09-02T11:55:14Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "cat_features, you have num_features twice",
+    "path": "skorecard/skorecard.py",
+    "createdAt": "2021-09-02T12:11:59Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Good catch, will update",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-09-02T12:54:37Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Done.",
+    "path": "skorecard/metrics/metrics.py",
+    "createdAt": "2021-09-02T12:57:01Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "nice catch, fixed",
+    "path": "skorecard/skorecard.py",
+    "createdAt": "2021-09-02T12:59:17Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/53"
+ },
+ {
+  "number": 52,
+  "title": "allow bucketing_process in pipeline",
+  "body": "closes #51 ",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-08-26T15:49:28Z",
+  "closedAt": "2021-08-26T15:49:28Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/52"
+ },
+ {
+  "number": 46,
+  "title": "Fit interactive for bucketingprocess",
+  "body": "About 1 year and ~1000 commits ago, I planned to spent two days on this project called `skorecard` to add a dash app for interactive bucketing. Turns out the problem was a lot trickier than I thought. On and off during the last year I worked on the `skorecard` internals to be able to make this possible.\r\n\r\nSo, I am very excited about this PR. It adds `.fit_interactive()` to all `skorecard` classes, making it much easier to explore and update bucket information.\r\n\r\n### example\r\n\r\n```python\r\nfrom skorecard import Skorecard\r\nfrom skorecard.datasets import load_uci_credit_card\r\n\r\nX, y = load_uci_credit_card(return_X_y=True)\r\nnum_cols = [\"LIMIT_BAL\", \"BILL_AMT1\"]\r\ncat_cols = [\"EDUCATION\", \"MARRIAGE\"]\r\nmodel = Skorecard(cat_features = cat_cols, selected_features = num_cols+cat_cols)\r\n\r\nmodel.fit_interactive(X, y)\r\n```\r\n\r\nWhich will start a dash app that supports two-step bucketing (editing both the input mapping and the assignment from prebuckets to buckets):\r\n\r\n![image](https://user-images.githubusercontent.com/5570380/129701318-17c9cca5-8f4e-4a3a-91d5-74bb9d418590.png)\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-21T06:56:37Z",
+  "closedAt": "2021-08-21T06:56:37Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/46"
+ },
+ {
+  "number": 45,
+  "title": "Fit interactive for pipelines",
+  "body": "This PR adds support for:\r\n\r\n- `SkorecardPipeline.fit_interactive()`\r\n- Showing feature type in the dash app (categorical or numerical)\r\n\r\nWhat's still missing? \r\n\r\n- support for setting missing_bucket or other_bucket\r\n- support for `.fit_interactive()` for `BucketingProcess()` and `Skorecard()`\r\n\r\nCode example:\r\n\r\n```python\r\nfrom skorecard.datasets import load_uci_credit_card\r\nfrom skorecard.bucketers import DecisionTreeBucketer, OrdinalCategoricalBucketer\r\nfrom skorecard.pipeline import to_skorecard_pipeline\r\nfrom sklearn.pipeline import make_pipeline\r\n\r\nX, y = load_uci_credit_card(return_X_y=True)\r\n\r\npipe = make_pipeline(\r\n    OrdinalCategoricalBucketer(variables=[\"EDUCATION\",\"MARRIAGE\"]),\r\n    DecisionTreeBucketer(max_n_bins=10, variables=[\"LIMIT_BAL\",\"BILL_AMT1\"])\r\n)\r\n\r\n# Make this a skorecard pipeline, which adds some convenience methods\r\npipe = to_skorecard_pipeline(pipe)\r\n\r\npipe.fit_interactive(X, y) # not run\r\n```\r\n\r\nScreenshot:\r\n\r\n![image](https://user-images.githubusercontent.com/5570380/129220477-9fd5ab80-377d-40c0-83e5-d1ac2a860278.png)\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-12T17:28:17Z",
+  "closedAt": "2021-08-12T17:28:17Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "\"interactively\"",
+    "path": "skorecard/pipeline/pipeline.py",
+    "createdAt": "2021-08-12T15:11:58Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "\"losing\"",
+    "path": "skorecard/pipeline/pipeline.py",
+    "createdAt": "2021-08-12T15:12:08Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/45"
+ },
+ {
+  "number": 44,
+  "title": "Add .fit_interactive()",
+  "body": "This PR adds a new `.fit_interactive()` method to all bucketers. It has proper documentation, error handling, support for numericals and categoricals, and support for inline or external dash app mode.\r\n\r\nWhat's missing:\r\n\r\n- support for setting `missing_bucket` or `other_bucket`\r\n- showing if a feature is categorical or numerical\r\n- support for `.fit_interactive()` for SkorecardPipeline(), BucketingProcess() and Skorecard()\r\n\r\nThose feature can be add in future PRs, this should be a solid basis to build on.\r\n\r\nCloses #3 \r\n\r\nScreenshots:\r\n\r\n![dash_app_numerical_bucketer](https://user-images.githubusercontent.com/5570380/129196555-fc4c0e1d-e6f9-4ea1-a791-5cd3aa1ab043.png)\r\n![dash_app_categorical_bucketer](https://user-images.githubusercontent.com/5570380/129196566-eaa1b6da-e48b-49a9-8e86-cb23696ce014.png)\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-12T13:59:10Z",
+  "closedAt": "2021-08-12T13:59:10Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/44"
+ },
+ {
+  "number": 43,
+  "title": "Add benchmarks",
+  "body": " closes #4",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-12T15:04:08Z",
+  "closedAt": "2021-08-12T15:04:08Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/43"
+ },
+ {
+  "number": 42,
+  "title": "Add howto on mixed use with other packages",
+  "body": "closes #39 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-12T15:03:37Z",
+  "closedAt": "2021-08-12T15:03:37Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/42"
+ },
+ {
+  "number": 41,
+  "title": "More cv work",
+  "body": "Closes #30 and #31, as well fixing a regression in grid search context of #35",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-10T14:26:33Z",
+  "closedAt": "2021-08-10T14:26:33Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/41"
+ },
+ {
+  "number": 40,
+  "title": "Add support for CV in bucketingprocess",
+  "body": "closes #32",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-08-10T12:34:33Z",
+  "closedAt": "2021-08-10T12:34:33Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/40"
+ },
+ {
+  "number": 37,
+  "title": "add check for y type and shape",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-07-26T11:07:55Z",
+  "closedAt": "2021-07-26T11:07:55Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "closes #34 and #33 ",
+    "createdAt": "2021-07-26T09:29:24Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/37"
+ },
+ {
+  "number": 36,
+  "title": "Option to pass logisticregression kwargs in Skorecard()",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-07-21T15:16:42Z",
+  "closedAt": "2021-07-21T15:16:42Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/36"
+ },
+ {
+  "number": 28,
+  "title": "update dependencies in order to support python 3.6",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-25T12:59:58Z",
+  "closedAt": "2021-06-25T12:59:58Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/28"
+ },
+ {
+  "number": 27,
+  "title": "1 refactor bucketers",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-25T12:39:53Z",
+  "closedAt": "2021-06-25T12:39:53Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "do you not need `self.binners: Dict[str, Any] = {}` here?",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-22T13:32:54Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "why do we have this for only a few bucketers?",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-22T13:33:34Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "same as above, concerning `self.binners: Dict[str, Any] = {}`",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-22T13:33:53Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "nice, makes much more sense to put it here",
+    "path": "skorecard/bucketers/base_bucketer.py",
+    "createdAt": "2021-06-22T13:35:24Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "small comment, there is a double space between 'we' 'require'",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-22T13:37:02Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "because this bucketer doesn't use any estimators to find the boundaries, so no fitted instances to save. \r\n\r\nActually, we don't need `self.binners` anywhere, it's not used in any code, just there in case users might want to dig into the fit. Better if we simplify & remove entirely?",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-24T18:22:41Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "see above",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-24T18:22:49Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "fixed in typo commit",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-24T18:23:57Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Ok, went ahead and removed it. ",
+    "path": "skorecard/bucketers/bucketers.py",
+    "createdAt": "2021-06-24T18:29:29Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/27"
+ },
+ {
+  "number": 23,
+  "title": "13 similar",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-06-22T07:22:43Z",
+  "closedAt": "2021-06-22T07:22:43Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/23"
+ },
+ {
+  "number": 22,
+  "title": "Some refactoring of the docs/ content",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-22T07:19:44Z",
+  "closedAt": "2021-06-22T07:19:44Z",
+  "comments": [
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Some ❤️  for the docs. Some broken links and TODO's removed, restructured some content.\r\n\r\nI still feel there's a bit of duplication, some things can be condensed etc. Needs some more work still.",
+    "createdAt": "2021-06-21T12:44:48Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "'and' configuration files",
+    "path": "docs/howto/save_buckets_to_file.ipynb",
+    "createdAt": "2021-06-21T13:49:14Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "'as' configuration files actually. Typo fixed thnx",
+    "path": "docs/howto/save_buckets_to_file.ipynb",
+    "createdAt": "2021-06-22T07:19:31Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/22"
+ },
+ {
+  "number": 21,
+  "title": "12 neutral",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-06-18T08:03:19Z",
+  "closedAt": "2021-06-18T08:03:19Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/21"
+ },
+ {
+  "number": 19,
+  "title": "Fix bug in OrdinalCategoricalBucketer with encoding_method set to 'ordered'",
+  "body": "closes #8 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-16T06:59:44Z",
+  "closedAt": "2021-06-16T06:59:44Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/19"
+ },
+ {
+  "number": 18,
+  "title": "Fix BucketingProcess .prebucket_table() for missing values",
+  "body": "closes #14",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-16T06:55:16Z",
+  "closedAt": "2021-06-16T06:55:16Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/18"
+ },
+ {
+  "number": 17,
+  "title": "save yml as string",
+  "body": "Closes #2 ",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-15T10:34:51Z",
+  "closedAt": "2021-06-15T10:34:51Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/17"
+ },
+ {
+  "number": 16,
+  "title": "fix IV bug",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-06-15T07:32:53Z",
+  "closedAt": "2021-06-15T07:32:53Z",
+  "comments": [
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "Closes #5 ",
+    "createdAt": "2021-06-15T07:13:11Z"
+   },
+   {
+    "author": {
+     "login": "sbjelogr"
+    },
+    "body": "Good fix.",
+    "createdAt": "2021-06-15T07:32:49Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/16"
+ },
+ {
+  "number": 15,
+  "title": "9 riskiest bucket",
+  "body": "This closes #9 and #11 ",
+  "state": "MERGED",
+  "author": {
+   "login": "orchardbirds"
+  },
+  "mergedAt": "2021-06-16T13:20:19Z",
+  "closedAt": "2021-06-16T13:20:19Z",
+  "comments": [
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "This check should be there. Why remove it?",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-06-15T09:35:28Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Minor, but I don't find this method name clear. `_find_missing_bucket()` might cover it better?",
+    "path": "skorecard/bucketers/base_bucketer.py",
+    "createdAt": "2021-06-15T09:37:02Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Again, why remove this test? A missing_bucket must always be either -1 or an already existing bucket.",
+    "path": "tests/test_bucket_mapping.py",
+    "createdAt": "2021-06-15T09:40:52Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "unit test speed is becoming an issue. Can you combine the 3 tests into one function? Then we will only have to call BUCK_norisk.fit(X,u) 1x instead of 3x. (and that for 8 different bucketers)",
+    "path": "tests/test_bucketers.py",
+    "createdAt": "2021-06-15T10:07:31Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "The issue I was experiencing was the following:\r\n\r\n```python\r\nBUCK_norisk = OrdinalCategoricalBucketer(\r\n                          variables=[\"MARRIAGE\", \"EDUCATION\"])\r\nBUCK_norisk.fit(X, y)\r\n```\r\n\r\n![image](https://user-images.githubusercontent.com/49144672/122045777-6d975480-cdde-11eb-9d6a-47497397d701.png)\r\n\r\nHere, bucket -2 has the highest Event Rate, and I want to put the missing values there",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-06-15T11:35:08Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "see above",
+    "path": "tests/test_bucket_mapping.py",
+    "createdAt": "2021-06-15T11:35:31Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "I see. 'Other' is reserved for new values, or values that occur less than `tol` percent (often 5%). \r\n\r\nI guess we could allow setting `missing_bucket = -2`. In that case we should update the assert to incude the `-2` value and the `self.map.values()`. ",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-06-15T13:40:35Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "We should make sure it works in `test_bucket_mapping.py` as well.. the labels should be `Other | Missing` for -2",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-06-15T13:41:08Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "I added the test to `test_bucketer_OrdinalBucketer.py`",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-06-16T06:50:02Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "done",
+    "path": "skorecard/bucketers/base_bucketer.py",
+    "createdAt": "2021-06-16T06:50:34Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "i put this back",
+    "path": "tests/test_bucket_mapping.py",
+    "createdAt": "2021-06-16T06:50:51Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "done",
+    "path": "tests/test_bucketers.py",
+    "createdAt": "2021-06-16T06:50:59Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "and changed the assert to allow 'special' values",
+    "path": "skorecard/bucket_mapping.py",
+    "createdAt": "2021-06-16T06:51:25Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "damn, the tests run locally but clearly i broke something fixing the merge conflict here",
+    "createdAt": "2021-06-16T07:46:15Z"
+   },
+   {
+    "author": {
+     "login": "orchardbirds"
+    },
+    "body": "@timvink Ready for review again. Had to fix a broken test and merge conflicts :)",
+    "createdAt": "2021-06-16T12:51:43Z"
+   },
+   {
+    "author": {
+     "login": "timvink"
+    },
+    "body": "Let's merge & release :)",
+    "createdAt": "2021-06-16T13:08:57Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/15"
+ },
+ {
+  "number": 10,
+  "title": "Add meetup link",
+  "body": "",
+  "state": "MERGED",
+  "author": {
+   "login": "timvink"
+  },
+  "mergedAt": "2021-06-14T17:16:15Z",
+  "closedAt": "2021-06-14T17:16:15Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/skorecard/pull/10"
+ }
+]

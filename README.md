@@ -19,12 +19,12 @@ OpenHands reads our existing code, the history of past pull requests and each re
 2. **Before coding.** A developer gives it a ticket. It returns a blueprint: existing code to reuse with the exact call, similar past pull requests with the reviewer's reasons, and who to ask.
 3. **When a pull request is opened.** It checks the change on four tracks, posts one review comment, and raises an alert if anything blocks the merge.
 
-| Track | Question it answers | Evidence it must cite |
-|---|---|---|
-| Reuse | Did we already build this? | The existing code, as `repo/path:line` |
-| History | Was this tried or rejected before? | A past pull request number |
+| Track                   | Question it answers                                                       | Evidence it must cite                                            |
+| ----------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Reuse                   | Did we already build this?                                                | The existing code, as `repo/path:line`                         |
+| History                 | Was this tried or rejected before?                                        | A past pull request number                                       |
 | Security and compliance | Are there exposed credentials, customer data in logs, or rule violations? | A rule ID, plus the repository's own policy ID where one applies |
-| Cost | Will this change raise cloud spend? | A rule ID |
+| Cost                    | Will this change raise cloud spend?                                       | A rule ID                                                        |
 
 ```mermaid
 flowchart TB
@@ -49,13 +49,13 @@ flowchart TB
 
 ## What changes for teams
 
-| Today | With OpenHands |
-|---|---|
-| Each developer configures their AI coding tool differently, and output quality varies | One skill pack per workflow, loaded at setup |
-| Developers find out at review that the feature already exists | They are told before writing any code |
-| Reviewers check secrets, logging and cost by eye | Those checks arrive with the pull request |
-| Past decisions are forgotten | Similar past pull requests are cited in the review |
-| Feedback is scattered across comments | One comment, with the verdict in the title |
+| Today                                                                                 | With OpenHands                                     |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Each developer configures their AI coding tool differently, and output quality varies | One skill pack per workflow, loaded at setup       |
+| Developers find out at review that the feature already exists                         | They are told before writing any code              |
+| Reviewers check secrets, logging and cost by eye                                      | Those checks arrive with the pull request          |
+| Past decisions are forgotten                                                          | Similar past pull requests are cited in the review |
+| Feedback is scattered across comments                                                 | One comment, with the verdict in the title         |
 
 ## Principles
 
@@ -67,10 +67,10 @@ flowchart TB
 
 ## See it
 
-| Demo pull request | What it contains | Result |
-|---|---|---|
-| [#8, expected blocked](https://github.com/vamsikodavali/Natwest-PRAgent/pull/8) | Hardcoded AWS keys, customer data in a log line, a re-written S3 uploader, an unbounded query, per-row uploads, a warehouse resize | 🛑 needs changes: 2 blockers, 4 warnings |
-| [#9, expected accepted](https://github.com/vamsikodavali/Natwest-PRAgent/pull/9) | The same feature built by reusing locopy's `S3.upload_to_s3`, with no secrets and a bounded query | ✅ no issues found |
+| Demo pull request                                                               | What it contains                                                                                                                   | Result                                   |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| [#8, expected blocked](https://github.com/vamsikodavali/Natwest-PRAgent/pull/8)  | Hardcoded AWS keys, customer data in a log line, a re-written S3 uploader, an unbounded query, per-row uploads, a warehouse resize | 🛑 needs changes: 2 blockers, 4 warnings |
+| [#9, expected accepted](https://github.com/vamsikodavali/Natwest-PRAgent/pull/9) | The same feature built by reusing locopy's `S3.upload_to_s3`, with no secrets and a bounded query                                | ✅ no issues found                       |
 
 The review comment has the verdict in its title, one table of blockers, one of warnings, a "Who to ask" table, and the fix for each finding in a collapsed section. When there are blockers, the terminal also prints a two-line alert:
 
@@ -133,13 +133,13 @@ Full steps, expected output and troubleshooting are in the [runbook](guardian/do
 
 ## What has been measured
 
-| Check | Result |
-|---|---|
-| Planted pull request | All six planted issues found, with correct line numbers and no secret values printed |
-| Clean pull request | No findings |
-| Reuse search alone, 14 labelled tickets on the demo repos | Right helper in the top 3 for 86%, ranked first for 64% |
-| Reuse search, 3 tickets where nothing exists | Stays silent on 2 of 3 |
-| Engine tests | 67 tests, run in CI |
+| Check                                                     | Result                                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Planted pull request                                      | All six planted issues found, with correct line numbers and no secret values printed |
+| Clean pull request                                        | No findings                                                                          |
+| Reuse search alone, 14 labelled tickets on the demo repos | Right helper in the top 3 for 86%, ranked first for 64%                              |
+| Reuse search, 3 tickets where nothing exists              | Stays silent on 2 of 3                                                               |
+| Engine tests                                              | 67 tests, run in CI                                                                  |
 
 These are small samples on two repositories. They show the flow works, not how accurate it is at scale.
 
@@ -157,13 +157,13 @@ These are small samples on two repositories. They show the flow works, not how a
 
 ## Future scope
 
-| Stage | What is added |
-|---|---|
-| Pilot | Automatic trigger on pull requests. Silent mode on one team, comparing its findings with human reviewers. |
-| Trust | Proven scanners (secrets, static analysis, dependency and infrastructure cost) run first, with the AI explaining and linking their results. Accuracy measured against a set of past pull requests. |
-| Reach | Real mail and chat connectors for alerts. One comment updated in place. Blueprints posted on tickets and available inside the developer's editor. |
-| Scale | A code index across all repositories, so it can trace which services a change affects. |
-| Depth | Suggested fixes with tests, validated in an isolated sandbox. A readiness score based on blast radius, past incidents and test coverage. Findings mapped to compliance control IDs for audit. |
-| Learning | Outcomes of past reviews feed back as proposed rule updates, approved by a human. |
+| Stage    | What is added                                                                                                                                                                                      |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pilot    | Automatic trigger on pull requests. Silent mode on one team, comparing its findings with human reviewers.                                                                                          |
+| Trust    | Proven scanners (secrets, static analysis, dependency and infrastructure cost) run first, with the AI explaining and linking their results. Accuracy measured against a set of past pull requests. |
+| Reach    | Real mail and chat connectors for alerts. One comment updated in place. Blueprints posted on tickets and available inside the developer's editor.                                                  |
+| Scale    | A code index across all repositories, so it can trace which services a change affects.                                                                                                             |
+| Depth    | Suggested fixes with tests, validated in an isolated sandbox. A readiness score based on blast radius, past incidents and test coverage. Findings mapped to compliance control IDs for audit.      |
+| Learning | Outcomes of past reviews feed back as proposed rule updates, approved by a human.                                                                                                                  |
 
 Code is sent to an AI model for analysis, so model hosting and data handling need security and legal sign-off before any pilot on internal repositories.

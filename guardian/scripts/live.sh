@@ -26,10 +26,10 @@ placeholder() {  # $1 = file, $2 = title, $3 = message
 }
 
 if [ "${1:-}" = "--prepare" ]; then
-  placeholder out/live-blueprint.md "💡 Code recommendation" "Ready. Run: scripts/live.sh blueprint demo/ticket.md"
-  placeholder out/live-pr-review.md "🔍 Pull request review" "Ready. Run: scripts/live.sh pr-review <PR URL>"
-  open_in_vscode out/live-blueprint.md; open_in_vscode out/live-pr-review.md
-  echo "Created out/live-blueprint.md and out/live-pr-review.md."
+  placeholder out/live-blueprint.md "💡 Code recommendation" "Ready. Run: scripts/demo-suggest.sh"
+  placeholder out/live-prs.md "🔍 Pull request reviews" "Ready. Run: scripts/demo-prs.sh"
+  open_in_vscode out/live-blueprint.md; open_in_vscode out/live-prs.md
+  echo "Created out/live-blueprint.md and out/live-prs.md."
   echo "For each: Cmd+Shift+P → 'Markdown: Open Locked Preview to the Side'."
   exit 0
 fi
@@ -42,7 +42,8 @@ input="${args[*]:-}"
 # a ticket file is read; a diff file is passed by path so the skill reads it itself
 if [ -f "$input" ] && [[ "$input" != *.diff ]]; then text="$(cat "$input")"; else text="$input"; fi
 subject="$(printf '%s' "$text" | head -1 | cut -c1-160)"
-out="out/live-$skill.md"; mkdir -p out
+out="${LIVE_OUT:-out/live-$skill.md}"; mkdir -p out   # LIVE_OUT: write to another page
+prefix_args=(); [ -n "${LIVE_PREFIX:-}" ] && prefix_args=(--prefix-file "$LIVE_PREFIX")   # keep earlier results on top
 model="${GUARDIAN_MODEL:-claude-sonnet-5-5}"
 
 
@@ -59,7 +60,11 @@ fi
 title="OpenHands: $skill"; label="Ticket"
 if [ "$skill" = blueprint ]; then title="💡 Code recommendation"; fi
 if [ "$skill" = pr-review ]; then title="🔍 Pull request review"; label="Pull request"; fi
-placeholder "$out" "$title" "**$label:** $subject. Starting…"   # exists before VS Code is asked to open it
+if [ -n "${LIVE_PREFIX:-}" ]; then   # keep earlier results visible while this one starts
+  { cat "$LIVE_PREFIX"; printf '\n\n---\n\n# %s\n\n> **%s:** %s. Starting…\n' "$title" "$label" "$subject"; } > "$out"
+else
+  placeholder "$out" "$title" "**$label:** $subject. Starting…"   # exists before VS Code is asked to open it
+fi
 open_in_vscode "$out"
 claude -p "/$skill $text" --model "$model" --output-format stream-json --verbose --max-turns 40 \
-  | ./bin/guardian live --out "$out" --subject "$subject" --model "$model" --title "$title" --label "$label"
+  | ./bin/guardian live --out "$out" --subject "$subject" --model "$model" --title "$title" --label "$label" ${prefix_args[@]+"${prefix_args[@]}"}

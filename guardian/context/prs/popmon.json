@@ -1,0 +1,2442 @@
+[
+ {
+  "number": 299,
+  "title": "fix: return p=0 for large KS scores (green light on strongest drift) and normalise counts in PSI/JSD",
+  "body": "## Problem\n\n`ks_prob` (`popmon/analysis/comparison/comparisons.py`) is a port of ROOT's `TMath::KolmogorovProb`, but the last branch is missing: for `z >= 6.8116` ROOT returns `0`, popmon returns `nan` (the existing test even pins `ks_prob(10.0) == nan`).\n\nThe NaN propagates to the KS z-score, and `traffic_light` puts a NaN in neither the yellow nor the red band, so the **largest drifts get a green light**.\n\n```python\nfrom popmon.analysis.comparison.comparisons import ks_prob\nfrom scipy.special import kolmogorov\nfor z in [6.8, 6.9, 10.0, 48.0]:\n    print(z, ks_prob(z), kolmogorov(z))\n# 6.8   1.37e-40   1.37e-40\n# 6.9   nan        8.86e-42\n# 10.0  nan        2.77e-87\n# 48.0  nan        0.0\n```\n\nIn a full `pm_stability_report` on a normal feature, a +0.1σ shift gives a KS z-score of 5.67 (red), while a +1σ shift gives z = 48 → p = NaN → **green**.\n\nSecond issue in the same module: `population_stability_index`, `kullback_leibler_divergence` and `jensen_shannon_divergence` receive raw bin entries (counts), not proportions. Their values therefore depend on the sample sizes. For example, two weeks drawn from the same distribution give a \"PSI\" of 83,670; the PSI of the proportions is 0.005. The traffic light for PSI is built from deviations of the metric, so I do not claim that this changes the colour. It does change the reported number.\n\n## Fix\n\n- `ks_prob`: return `0` for `u >= 6.8116`, as ROOT does.\n- PSI/KL/JSD: normalise the inputs to proportions before applying epsilon.\n\n## Tests\n\n- `test_ks_prob` now expects `0` at `z = 10`.\n- New tests:\n  - `test_ks_prob_large_score_is_zero_not_nan`;\n  - `test_ks_zscore_large_drift_is_red`;\n  - `test_psi_jsd_on_counts_equal_psi_jsd_on_proportions`.\n- `tests/popmon/analysis/comparison/test_comparisons.py`: 4 failed / 5 passed before the fix, 9 passed after.\n- Full suite on a local run: 25/25 in the affected test directories.\n\nReference values come from `scipy.special.kolmogorov` and ROOT's documented formula. I found no existing issue or PR about this, and `ks_prob` has not changed since 2020.\n\n## Authors and AI disclosure\n\nReported by Xamit Kadirbekov and Daniyal Kadirbekov (GERO numerical assurance). AI tools (Claude) were used to find the case, build the reference and draft the patch and tests. The example above was re-run independently before submission.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n",
+  "state": "OPEN",
+  "author": {
+   "login": "kadyrbekovhamit-cyber"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/299"
+ },
+ {
+  "number": 298,
+  "title": "Compatibility with Python 3.13",
+  "body": "* Changing the dependency htmlmin -> htmlmin2\r\n* Adding tests for Python 3.13 and Spark 4.1.0\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "pawel99k"
+  },
+  "mergedAt": "2026-01-09T09:33:01Z",
+  "closedAt": "2026-01-09T09:33:01Z",
+  "comments": [
+   {
+    "author": {
+     "login": "pawel99k"
+    },
+    "body": "Fixes #297 ",
+    "createdAt": "2026-01-02T13:45:51Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/298"
+ },
+ {
+  "number": 296,
+  "title": "fix: display with ipython in jupyter lab",
+  "body": "fix display of report with ipython in jupyter notebook/lab.",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2025-09-04T13:02:00Z",
+  "closedAt": "2025-09-04T13:02:00Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/296"
+ },
+ {
+  "number": 295,
+  "title": "Test spark4 scala213",
+  "body": "Test spark4 with scala213",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2025-09-03T09:58:50Z",
+  "closedAt": "2025-09-03T09:58:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/295"
+ },
+ {
+  "number": 294,
+  "title": "fix: updates needed for plotly v6",
+  "body": "updates needed for plotly v6",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2025-09-01T12:32:26Z",
+  "closedAt": "2025-09-01T12:32:26Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/294"
+ },
+ {
+  "number": 293,
+  "title": "fix: restrict plotly to version smaller than 6",
+  "body": "For >6 plots are rotated in report. To be investigated.",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2025-08-27T09:37:10Z",
+  "closedAt": "2025-08-27T09:37:10Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/293"
+ },
+ {
+  "number": 292,
+  "title": "[fix]: required update of histogrammar to patch change in numpy 2.3",
+  "body": "Update histogrammar to v1.1.1\r\nIn numpy 2.3, converting np.number to a dtype no longer allowed.\r\n\r\nSee: https://github.com/numpy/numpy/pull/28254\r\n\"When constructing a dtype from a class with a dtype attribute, that attribute must be a dtype-instance rather than a thing that can be parsed as a dtype instance.\"\r\n\r\nhist.datatype now returns float instead of np.number as datatype.",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2025-08-26T15:12:07Z",
+  "closedAt": "2025-08-26T15:12:07Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/292"
+ },
+ {
+  "number": 291,
+  "title": "chore: bump version",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2025-01-24T15:48:14Z",
+  "closedAt": "2025-01-24T15:48:14Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/291"
+ },
+ {
+  "number": 290,
+  "title": "ci: simplify release process",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2025-01-24T15:40:18Z",
+  "closedAt": "2025-01-24T15:40:18Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/290"
+ },
+ {
+  "number": 289,
+  "title": "chore: revert version",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2025-01-23T17:03:55Z",
+  "closedAt": "2025-01-23T17:03:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/289"
+ },
+ {
+  "number": 288,
+  "title": "REL: popmon version bump to v1.4.7",
+  "body": "Version bump to v1.4.7",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2025-01-23T16:20:22Z",
+  "closedAt": "2025-01-23T16:20:22Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/288"
+ },
+ {
+  "number": 287,
+  "title": "Add pandas and numpy >= 2 compatibility",
+  "body": "- align requirements.txt with pyproject.toml\r\n- remove calls to np.string_ not existing in numpy >= 2.0.0\r\n- remove calls to pd._testing.makeMixedDataFrame not existing in new pandas versions\r\n- fix install and test commands in documentation for developers\r\n- replace np.mean with column-wise version\r\n- drop pandas dependency constraint <2\r\n- require Python 3.9 in pyproject.toml\r\n- add PySpark 3.5.3 to test pipeline matrix\r\n- update test pipeline matrix: exclude Python 3.8, include Python 3.12",
+  "state": "MERGED",
+  "author": {
+   "login": "mkopec87"
+  },
+  "mergedAt": "2025-01-20T17:56:21Z",
+  "closedAt": "2025-01-20T17:56:22Z",
+  "comments": [
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "Still 5 failing tests :(\r\n\r\n```\r\nFAILED tests/popmon/notebooks/test_notebooks.py::test_notebook_advanced - nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:\r\nFAILED tests/popmon/pipeline/test_metrics.py::test_hists_stability_metrics - pandas.errors.DataError: Cannot aggregate non-numeric type: object\r\nFAILED tests/popmon/pipeline/test_report.py::test_df_stability_report_external - TypeError: float() argument must be a string or a real number, not 'CategorizeHistogramMethods'\r\nFAILED tests/popmon/pipeline/test_report.py::test_df_stability_report_rolling - pandas.errors.DataError: Cannot aggregate non-numeric type: object\r\nFAILED tests/popmon/pipeline/test_report.py::test_df_stability_report_expanding - pandas.errors.DataError: Cannot aggregate non-numeric type: object\r\n```\r\n\r\nBTW. do we need 'requirements.txt' for anything?",
+    "createdAt": "2024-12-16T10:17:57Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "`functools.partial` could be used here instead of `staticmethod`",
+    "path": "popmon/analysis/profiling/pull_calculator.py",
+    "createdAt": "2024-12-20T10:13:45Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "```python\r\nfrom functools import partial\r\n\r\npartial(np.mean, axis=0)\r\n```",
+    "path": "tests/popmon/analysis/profiling/test_apply_func.py",
+    "createdAt": "2024-12-20T10:15:07Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "Cannot really inline partial in places where I use mean, as 'functools.partial' doesn't provide function name (`__name__` attr), which is used for naming columns in tests",
+    "path": "tests/popmon/analysis/profiling/test_apply_func.py",
+    "createdAt": "2025-01-03T10:53:15Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "Done",
+    "path": "popmon/analysis/profiling/pull_calculator.py",
+    "createdAt": "2025-01-03T10:54:34Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "Managed to fix 3 tests, two more to go:\r\n\r\n- FAILED tests/popmon/notebooks/test_notebooks.py::test_notebook_advanced - nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:\r\n- FAILED tests/popmon/pipeline/test_report.py::test_df_stability_report_external - TypeError: float() argument must be a string or a real number, not 'CategorizeHistogramMethods'\r\n\r\nSomething seems wrong with 'external' reference type.",
+    "createdAt": "2025-01-03T11:05:14Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Hi @mkopec87, thanks for following up. Happy to have a look at these tests then - I'll give it a go.",
+    "createdAt": "2025-01-03T12:45:30Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Hi @mkopec87,\r\nI found the problem: np.mean and np.std call df.mean and df.std underneath. \r\nHowever, df.mean() and df.std() have now become more strict. We now need: `df.std(numeric_only=True)`.\r\nBefore it was skipping non-number columns by default. But not anymore.",
+    "createdAt": "2025-01-04T16:00:22Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "@mkopec87 With these fixes below the two tests work for me.\r\nCan you try these?\r\n\r\nIn popmon/analysis/profiling/pull_calculator.py, in class ReferencePullCalculator, lines 236-237, set instead:\r\n- for mean: instead of `np.mean` use `partial(pd.DataFrame.mean, numeric_only=True)`\r\n- for std: instead of `np.std` use `partial(pd.DataFrame.std, numeric_only=True, ddof=0)`\r\n\r\nThat should fix the crash, and return the same values as before.",
+    "createdAt": "2025-01-04T17:19:32Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "Thanks @mbaak, I added changes you've suggested :)",
+    "createdAt": "2025-01-04T23:13:27Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "I've set up a build in my forked repo, seems it's passing now :)",
+    "createdAt": "2025-01-05T22:07:59Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Let's give @sbrugman a day or two still for a quick, final review. ",
+    "createdAt": "2025-01-06T09:12:22Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "@sbrugman bump ;) ",
+    "createdAt": "2025-01-14T10:22:40Z"
+   },
+   {
+    "author": {
+     "login": "mkopec87"
+    },
+    "body": "Hi guys, any chance you'd find some time for a final review? :) I'm eager to start using this new feature as soon as possible :)",
+    "createdAt": "2025-01-20T08:08:16Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "@mkopec87 merged. Thanks!",
+    "createdAt": "2025-01-20T17:56:40Z"
+   },
+   {
+    "author": {
+     "login": "pawel99k"
+    },
+    "body": "Hi @mbaak @sbrugman, are there plans to publish a new release on PyPI? I see also the [version](https://github.com/ing-bank/popmon/blob/master/popmon/version.py) has not been updated in this PR.",
+    "createdAt": "2025-01-22T18:20:43Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "v1.4.7 has been released on pypi!",
+    "createdAt": "2025-01-24T16:00:07Z"
+   },
+   {
+    "author": {
+     "login": "pawel99k"
+    },
+    "body": "Amazing, thanks:)",
+    "createdAt": "2025-01-24T16:39:47Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/287"
+ },
+ {
+  "number": 285,
+  "title": "build(deps): update pandas requirement from <2,>=0.25.1 to >=0.25.1,<3",
+  "body": "Updates the requirements on [pandas](https://github.com/pandas-dev/pandas) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/pandas-dev/pandas/releases\">pandas's releases</a>.</em></p>\n<blockquote>\n<h2>Pandas 2.2.3</h2>\n<p>We are pleased to announce the release of pandas 2.2.3.\nThis release includes some new features, bug fixes, and performance improvements. We recommend that all users upgrade to this version.</p>\n<p>See the <a href=\"https://pandas.pydata.org/pandas-docs/version/2.2.3/whatsnew/v2.2.3.html\">full whatsnew</a> for a list of all the changes.\nPandas 2.2.3 supports Python 3.9 and higher.</p>\n<p>The release will be available on the defaults and conda-forge channels:</p>\n<pre><code>conda install pandas\n</code></pre>\n<p>Or via PyPI:</p>\n<pre><code>python3 -m pip install --upgrade pandas\n</code></pre>\n<p>Please report any issues with the release on the <a href=\"https://github.com/pandas-dev/pandas/issues\">pandas issue tracker</a>.</p>\n<p>Thanks to all the contributors who made this release possible.</p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/0691c5cf90477d3503834d983f69350f250a6ff7\"><code>0691c5c</code></a> RLS: 2.2.3</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/658dfddaec7548151db4c832a8472d732b1afec9\"><code>658dfdd</code></a> relax cython bound</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/6891e90c4ed2a5c9843acbdb26a295faf1bfe386\"><code>6891e90</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59847\">#59847</a>: BLD: Build wheels for Python 3.13 on aarch64 as well</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/f108468a42932476754b359f33197da9faa06cd6\"><code>f108468</code></a> RLS: 2.2.3</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/69587385668f0ce61c7fbfc7946a187f8835b194\"><code>6958738</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59840\">#59840</a>: BLD: Final release prep for 2.2.3 (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59842\">#59842</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/0bd98feb952d678dcd6da090529c7457db11ca1b\"><code>0bd98fe</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59136\">#59136</a> on branch 2.2.x (Upload 3.13 &amp; free-threaded nightly wheel...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/8d67e77d6aa1b13611c27a63b87f5912fe938f85\"><code>8d67e77</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59836\">#59836</a> on branch 2.2.x (BLD: Fix bad Cython annotation) (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59837\">#59837</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/f7b63786ace286fa8bd0fee1a75589d41883b6df\"><code>f7b6378</code></a> Assorted backports for 2.2.x (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59785\">#59785</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/2127b4207abdbb355dbe32c66cfd50c16ff253b3\"><code>2127b42</code></a> Backport <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59144\">#59144</a> on 2.2.x / 2.3.x (remove ops div class to solve <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/2137\">#2137</a>) (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59535\">#59535</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/4a20adbd7d707f73491b930fe9a51e1607a7e070\"><code>4a20adb</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59813\">#59813</a> on branch 2.2.x (CI: Debug failing ARM builds) (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/59828\">#59828</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/pandas-dev/pandas/compare/v0.25.1...v2.2.3\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "OPEN",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/285"
+ },
+ {
+  "number": 284,
+  "title": "build(deps): update pandas requirement from <2,>=0.25.1 to >=2.2.2,<3",
+  "body": "Updates the requirements on [pandas](https://github.com/pandas-dev/pandas) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/pandas-dev/pandas/releases\">pandas's releases</a>.</em></p>\n<blockquote>\n<h2>Pandas 2.2.2</h2>\n<p>We are pleased to announce the release of pandas 2.2.2.\nThis release includes some new features, bug fixes, and performance improvements. We recommend that all users upgrade to this version.</p>\n<p>See the <a href=\"https://pandas.pydata.org/pandas-docs/version/2.2.2/whatsnew/v2.2.2.html\">full whatsnew</a> for a list of all the changes.\nPandas 2.2.2 supports Python 3.9 and higher.</p>\n<p>The release will be available on the defaults and conda-forge channels:</p>\n<pre><code>conda install pandas\n</code></pre>\n<p>Or via PyPI:</p>\n<pre><code>python3 -m pip install --upgrade pandas\n</code></pre>\n<p>Please report any issues with the release on the <a href=\"https://github.com/pandas-dev/pandas/issues\">pandas issue tracker</a>.</p>\n<p>Thanks to all the contributors who made this release possible.</p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/d9cdd2ee5a58015ef6f4d15c7226110c9aab8140\"><code>d9cdd2e</code></a> RLS: 2.2.2</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/98aeac9b1b559178ef4f6a0a112a09b1741d11d1\"><code>98aeac9</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58209\">#58209</a>: CI: Pin blosc to fix pytables (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58211\">#58211</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/5466f15462784eaa26e7ac43fc382f3802ab3ed1\"><code>5466f15</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58202\">#58202</a>: DOC/TST: Document numpy 2.0 support and add tests… (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58208\">#58208</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/45b0b32af03e65f8d9547c127f8694fb7c3e994f\"><code>45b0b32</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58203\">#58203</a> on branch 2.2.x (DOC: Add release date/contributors for 2....</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/c7ec5663b3a5f041d7e8c93fa3d75a1314477e27\"><code>c7ec566</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58087\">#58087</a> on branch 2.2.x (BLD: Build wheels using numpy 2.0rc1) (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/5\">#5</a>...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/691fc88fbd7b570017bbc05fa77754b24c1fa997\"><code>691fc88</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58181\">#58181</a> on branch 2.2.x (CI: correct error msg in test_view_index)...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/a947587c8ad419e9cf8f6cce1fd5ad80c32d759f\"><code>a947587</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58138\">#58138</a> on branch 2.2.x (BLD: Fix nightlies not building) (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58140\">#58140</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/b56842d93dc76dc2a83b7ab640af6a419697decb\"><code>b56842d</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58100\">#58100</a> on branch 2.2.x (MNT: fix compatibility with beautifulsoup...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/0f83d50c477f8aafb61a3db1d310d0b5fd261adc\"><code>0f83d50</code></a> Revert &quot;BLD: Pin numpy on 2.2.x&quot; (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58093\">#58093</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/e9b81ee3ecca2720f59e21091528e1e1e7eafe9a\"><code>e9b81ee</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58126\">#58126</a>: BLD: Build wheels with numpy 2.0rc1 (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/58127\">#58127</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/pandas-dev/pandas/compare/v0.25.1...v2.2.2\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2024-09-23T04:22:15Z",
+  "comments": [
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "Superseded by #285.",
+    "createdAt": "2024-09-23T04:22:14Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/284"
+ },
+ {
+  "number": 283,
+  "title": "docs: describe histogrammar usage for spark compiled with scala 2.13",
+  "body": "Update of README, describe how to histogrammar for spark compiled with scala 2.13.",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2024-02-04T00:13:11Z",
+  "closedAt": "2024-02-04T00:13:11Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/283"
+ },
+ {
+  "number": 282,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-07-18T10:04:52Z",
+  "closedAt": "2023-07-18T10:04:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/282"
+ },
+ {
+  "number": 279,
+  "title": "Release v1.4.5",
+  "body": "Huge thanks to @mi2354 for flagging the issues!",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-07-06T14:53:13Z",
+  "closedAt": "2023-07-06T14:53:13Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/279"
+ },
+ {
+  "number": 278,
+  "title": "Refresh",
+  "body": "Closes https://github.com/ing-bank/popmon/issues/274 and https://github.com/ing-bank/popmon/issues/275",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-07-06T13:38:37Z",
+  "closedAt": "2023-07-06T13:38:37Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/278"
+ },
+ {
+  "number": 273,
+  "title": "build(deps): update pandas requirement from <2,>=0.25.1 to >=0.25.1,<3",
+  "body": "Updates the requirements on [pandas](https://github.com/pandas-dev/pandas) to permit the latest version.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/pandas-dev/pandas/releases\">pandas's releases</a>.</em></p>\n<blockquote>\n<h2>Pandas 2.0.1</h2>\n<p>This is a patch release in the 2.0.x series and includes some regression and bug fixes. We recommend that all users upgrade to this version.</p>\n<p>See the <a href=\"https://pandas.pydata.org/pandas-docs/version/2.0.1/whatsnew/v2.0.1.html\">full whatsnew</a> for a list of all the changes.</p>\n<p>The release will be available on the defaults and conda-forge channels:</p>\n<pre><code>conda install pandas\n</code></pre>\n<p>Or via PyPI:</p>\n<pre><code>python3 -m pip install --upgrade pandas\n</code></pre>\n<p>Please report any issues with the release on the <a href=\"https://github.com/pandas-dev/pandas/issues\">pandas issue tracker</a>.</p>\n<p>Thanks to all the contributors who made this release possible.</p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/37ea63d540fd27274cad6585082c91b1283f963d\"><code>37ea63d</code></a> RLS: 2.0.1</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/4226ed591ea91fd255ee18f4bee1831a7b312c3b\"><code>4226ed5</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52882\">#52882</a> on branch 2.0.x (DOC: Update whatsnew) (<a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52885\">#52885</a>)</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/eb4af7e05c71d98113ee04f06459899c94e3c3f4\"><code>eb4af7e</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52877\">#52877</a> on branch 2.0.x (BUG: Adding a columns to a Frame with Ran...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/6e7efb42908bfdbd8fcafd210fd1af8140be8df2\"><code>6e7efb4</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52577\">#52577</a> on branch 2.0.x (BUG: describe not respecting ArrowDtype i...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/22f9e935e15ff23e2c9333373025e1ef95323f9d\"><code>22f9e93</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52867\">#52867</a> on branch 2.0.x (Adjust unxfail condition for nat test for...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/7a0aa9f8b49ca404e4975fdbf9f284f09a647276\"><code>7a0aa9f</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52843\">#52843</a> on branch 2.0.x (BUG: pyarrow duration arrays constructed ...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/3af68dcdf70eeaade3f1e0c67e048fdaee71638c\"><code>3af68dc</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52850\">#52850</a> on branch 2.0.x (REGR: SeriesGroupBy.agg with multiple cat...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/d220466440f46d4cf3543fbe4b5d4bcb579b5dcf\"><code>d220466</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52841\">#52841</a> on branch 2.0.x (BUG: dt.round with equal/higher freq reso...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/e52861d8acf8439b6c3e0abb3ac26caa9ef40e2f\"><code>e52861d</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52821\">#52821</a> on branch 2.0.x (BUG: Non unitless np NaT arithmetic with ...</li>\n<li><a href=\"https://github.com/pandas-dev/pandas/commit/fa94d3b77fe63743b04f86db42cf62c51b574ddf\"><code>fa94d3b</code></a> Backport PR <a href=\"https://redirect.github.com/pandas-dev/pandas/issues/52614\">#52614</a>: ENH: Implement more str accessor methods for ArrowDtype (...</li>\n<li>Additional commits viewable in <a href=\"https://github.com/pandas-dev/pandas/compare/v0.25.1...v2.0.1\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\nYou can trigger a rebase of this PR by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>\n> **Note**\n> Automatic rebases have been disabled on this pull request as it has been open for over 30 days.\n",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-07-18T10:05:36Z",
+  "comments": [
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you again about this release, but will get in touch when a new version is available. If you'd rather skip all updates until the next major or minor version, let me know by commenting `@dependabot ignore this major version` or `@dependabot ignore this minor version`. You can also ignore all major, minor, or patch releases for a dependency by adding an [`ignore` condition](https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#ignore) with the desired `update_types` to your config file.\n\nIf you change your mind, just re-open this PR and I'll resolve any conflicts on it.",
+    "createdAt": "2023-07-18T10:05:38Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/273"
+ },
+ {
+  "number": 272,
+  "title": "Release v1.4.2",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-05-25T16:22:56Z",
+  "closedAt": "2023-05-25T16:22:56Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/272"
+ },
+ {
+  "number": 271,
+  "title": "Release v1.4.1",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-05-25T16:04:38Z",
+  "closedAt": "2023-05-25T16:04:38Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/271"
+ },
+ {
+  "number": 270,
+  "title": "Fix reference type in metric pipeline",
+  "body": "Closes #263 thanks to @ruudkassing ",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-05-25T15:51:30Z",
+  "closedAt": "2023-05-25T15:51:30Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/270"
+ },
+ {
+  "number": 269,
+  "title": "Fix CI",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-05-25T15:39:03Z",
+  "closedAt": "2023-05-25T15:39:03Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/269"
+ },
+ {
+  "number": 265,
+  "title": "Fix reference type in metric pipeline",
+  "body": "Fixes issue where metrics pipeline (erroneously) overwrites reference type to \"self\", see #263.",
+  "state": "CLOSED",
+  "author": {
+   "login": "ruudkassing"
+  },
+  "mergedAt": null,
+  "closedAt": "2023-05-25T15:45:46Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "The linting issues are not coming from your PR. Will look into it",
+    "createdAt": "2023-05-19T14:12:01Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Superseded by https://github.com/ing-bank/popmon/pull/270 (rebased with linting fixes)",
+    "createdAt": "2023-05-25T15:45:43Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/265"
+ },
+ {
+  "number": 262,
+  "title": "Pytest fail on warnings",
+  "body": "Warnings fixed:\r\n\r\n- [x] FutureWarning: Units 'M', 'Y' and 'y' do not represent unambiguous timedelta values and will be removed in a future.\r\n- [X] FutureWarning: pandas.util.testing is deprecated. Use the functions in the public API at pandas.testing instead.\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-07-06T14:40:55Z",
+  "closedAt": "2023-07-06T14:40:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/262"
+ },
+ {
+  "number": 261,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-02-15T18:07:44Z",
+  "closedAt": "2023-02-15T18:07:44Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/261"
+ },
+ {
+  "number": 260,
+  "title": "enable ruff linter",
+  "body": "Close #259 ",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2023-02-15T17:59:16Z",
+  "closedAt": "2023-02-15T17:59:16Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/260"
+ },
+ {
+  "number": 258,
+  "title": "Merge master back into develop",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-10-19T14:35:30Z",
+  "closedAt": "2022-10-19T14:35:30Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/258"
+ },
+ {
+  "number": 257,
+  "title": "Release v1.4",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-10-19T14:30:04Z",
+  "closedAt": "2022-10-19T14:30:04Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/257"
+ },
+ {
+  "number": 256,
+  "title": "feat: summary table",
+  "body": "General information on the dataset and analysis.\r\n<img width=\"947\" alt=\"Screenshot 2022-09-20 at 10 50 56\" src=\"https://user-images.githubusercontent.com/20689007/191173966-94073937-6ef9-4a21-ad6f-07b49ce53102.png\">\r\n\r\ncloses ing-bank/popmon#248",
+  "state": "MERGED",
+  "author": {
+   "login": "pradyot-09"
+  },
+  "mergedAt": "2022-10-19T14:22:10Z",
+  "closedAt": "2022-10-19T14:22:10Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Time width (in human readable notation, like 7 days) would be worth having here",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-20T12:59:27Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Also include min/max value for time_axis",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-20T13:03:13Z"
+   },
+   {
+    "author": {
+     "login": "tomcis"
+    },
+    "body": "Whitespace at the end of the string",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-20T13:20:38Z"
+   },
+   {
+    "author": {
+     "login": "tomcis"
+    },
+    "body": "Any reason why most keys start with a lowercase letter and one with an uppercase?",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-20T13:21:39Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "I think the tables might look better side by side if I can get rid of white space around the tables.\r\n<img width=\"947\" alt=\"Screenshot 2022-09-21 at 15 18 27\" src=\"https://user-images.githubusercontent.com/20689007/191474047-445b45e0-fae0-47aa-aeb4-df3fee78e75c.png\">\r\n\r\n@sbrugman  any ideas on how to get the start and end time for the reproduction table?",
+    "createdAt": "2022-09-21T09:54:18Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "type hints + docstrings",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-22T07:07:27Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "type hints + docstrings",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-22T07:07:33Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "pass start/end time as arguments - or use a placeholder to be replaced after report generation is completed",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-22T07:08:08Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "type hints + docstrings",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-09-22T07:08:15Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "This time is a bit arbitrary (in the middle of the report generation).\r\nA cleaner way of achieving the same is adding a `TimingModule` to the pipelines.\r\nThe module would take a `key` that stores the `datetime.now()` to that key in the datastore. This way it's reusable for start- and end time in the pipeline framework.\r\n\r\nFor end time, it can be placed just before ReportGenerator.\r\n",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-10-04T15:33:07Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Table is now aligned to the left.\r\nThis can be solved (al least in safari, check for chrome) by putting `.js-plotly-plot{margin:auto;}` in the css file.",
+    "path": "popmon/visualization/templates/section.html",
+    "createdAt": "2022-10-04T15:37:04Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "The overview section description is now not accurate anymore (\"Alerts aggregated per feature\").\r\nAn example of what we could put is: \"Overview of the dataset, analysis and alerts.\"",
+    "path": "popmon/visualization/overview_section.py",
+    "createdAt": "2022-10-04T15:42:00Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "With the new description, we can just say \"Analysis\" here",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-10-04T15:43:27Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Just \"Dataset\" looks better with the new description.",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-10-04T15:43:50Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Could we please also replace \"Alert frequency per Feature\" with \"Alerts\"?",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-10-04T15:45:32Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/256"
+ },
+ {
+  "number": 255,
+  "title": "build(deps): update docutils requirement from <0.17 to <0.20",
+  "body": "Updates the requirements on [docutils](https://docutils.sourceforge.io/) to permit the latest version.\n\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot merge` will merge this PR after your CI passes on it\n- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it\n- `@dependabot cancel merge` will cancel a previously requested merge and block automerging\n- `@dependabot reopen` will reopen this PR if it is closed\n- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>",
+  "state": "CLOSED",
+  "author": {
+   "login": "dependabot[bot]"
+  },
+  "mergedAt": null,
+  "closedAt": "2022-09-12T06:34:22Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "@dependabot ignore this dependency\r\n",
+    "createdAt": "2022-09-12T06:34:22Z"
+   },
+   {
+    "author": {
+     "login": "dependabot[bot]"
+    },
+    "body": "OK, I won't notify you about docutils again, unless you re-open this PR or update it yourself. 😢",
+    "createdAt": "2022-09-12T06:34:25Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/255"
+ },
+ {
+  "number": 254,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-09-09T09:42:53Z",
+  "closedAt": "2022-09-09T09:42:53Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/254"
+ },
+ {
+  "number": 253,
+  "title": "Patch updates",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-09-09T09:34:02Z",
+  "closedAt": "2022-09-09T09:34:02Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/253"
+ },
+ {
+  "number": 251,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-09-01T13:36:52Z",
+  "closedAt": "2022-09-01T13:36:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/251"
+ },
+ {
+  "number": 250,
+  "title": "Remove skip empty plots",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-09-01T14:59:48Z",
+  "closedAt": "2022-09-01T14:59:48Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/250"
+ },
+ {
+  "number": 249,
+  "title": "feat(config): deprecate skip_empty_plots",
+  "body": "Provides the user with a warning when 'skip_empty_plots' is set to True. The default is now set to False.",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-08-31T06:41:52Z",
+  "closedAt": "2022-08-31T06:41:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/249"
+ },
+ {
+  "number": 247,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-08-25T10:34:50Z",
+  "closedAt": "2022-08-25T10:34:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/247"
+ },
+ {
+  "number": 246,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-08-19T13:13:43Z",
+  "closedAt": "2022-08-19T13:13:43Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/246"
+ },
+ {
+  "number": 245,
+  "title": "feat: hist_juxtaposition",
+  "body": "For now, the last_n is by default set to 2. Therefore, only two dates would appear in the dropdown. For the airline dataset if the last_n is set to max, popmon runs into the issue (for DEPARTURE feature) raised by Tomek https://github.com/ing-bank/popmon/issues/244.\r\n\r\n<img width=\"1011\" alt=\"Screenshot 2022-08-15 at 19 39 24\" src=\"https://user-images.githubusercontent.com/20689007/184653380-bde9567b-915d-43b6-ad83-4d6aaab3c858.png\">\r\n\r\ncloses ing-bank/popmon#230",
+  "state": "MERGED",
+  "author": {
+   "login": "pradyot-09"
+  },
+  "mergedAt": "2022-09-01T13:26:33Z",
+  "closedAt": "2022-09-01T13:26:33Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "`date` should be the (dynamic) time-axis name",
+    "path": "popmon/visualization/templates/assets/js/custom-script.js",
+    "createdAt": "2022-08-15T15:39:01Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Now that the issue in histogrammar should be resolved, we can test if that results in a passing ci/cd here.\r\n\r\n@pradyot-09 Until there is a new histogrammar release, you could add the git branch to `requirements.txt` for development purposes. Adding a line such as this should work:\r\n```\r\nhistogrammar @ https://github.com/histogrammar/histogrammar-python.git\r\n```",
+    "createdAt": "2022-08-18T19:16:07Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "@pradyot-09 `popmon_tutorial_reports.ipynb` needs to be updated for the tests to pass",
+    "createdAt": "2022-08-19T11:56:39Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "The current implementation is a great step forward, as it allows users to view individual histograms, which wasn't possible before:\r\n\r\n![image](https://user-images.githubusercontent.com/9756388/185659065-50af5b9e-e82e-4199-8cf4-ca6dd654b289.png)\r\n\r\nThe implementation might be better using two [plotly dropdowns](https://plotly.com/python/dropdowns/#update-several-data-attributes) in the same figure. This removes the redundant information that is now present in the plots: the reference is available both left and right, and histogram_prev1 is the same as histogram once selected. ",
+    "createdAt": "2022-08-19T16:01:06Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "@sbrugman Just to clarify: A single plot with a dropdown to change the dates? asking because we discussed one of the main reason to have the plots side by side was to compare them. ",
+    "createdAt": "2022-08-22T09:15:06Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "> @sbrugman Just to clarify: A single plot with a dropdown to change the dates? asking because we discussed one of the main reason to have the plots side by side was to compare them. \n\nSide-by-side or overlay should be both fine. The confusion in the current approach is the redundant information (histogram_prev1 may be the same as histogram in the other). You could consider adding the reference to the drop-down, and showing one histogram per drop-down.",
+    "createdAt": "2022-08-22T09:32:30Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "@sbrugman Have pushed the histogram plots with updatemenus. The code looks neater now. For static references the \"histogram_ref\" plots are repetitive. I think it would be clever to have the \"histogram_ref\" only once for static references. However, I think that we would need to pass the Settings object rather than the Report object to report_generation(). Not sure about the best way to get reference_type in histogram_section.\r\n<img width=\"1011\" alt=\"Screenshot 2022-08-25 at 18 12 54\" src=\"https://user-images.githubusercontent.com/20689007/186678097-0946f5ce-14fb-499c-99da-16d54b841c7b.png\">\r\n",
+    "createdAt": "2022-08-25T13:39:42Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "@sbrugman pushed the new histogram inspector with overlays. For now, I have kept double dropdowns for static reference too because I thought it was just very easy to disable overlays if needed. Let me know what you think.\r\n<img width=\"1155\" alt=\"Screenshot 2022-08-31 at 09 19 00\" src=\"https://user-images.githubusercontent.com/20689007/187589317-8dd94ef5-137d-4775-ae28-4b501f7c022b.png\">\r\n",
+    "createdAt": "2022-08-31T03:57:06Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "This comment has crept in",
+    "path": "popmon/analysis/comparison/hist_comparer.py",
+    "createdAt": "2022-08-31T06:33:31Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Probably \".feature\" is causing the issue of the dropdown not updating",
+    "path": "popmon/visualization/templates/assets/js/custom-script.js",
+    "createdAt": "2022-08-31T06:38:01Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "is this css needed?",
+    "path": "popmon/visualization/templates/assets/css/custom-style.css",
+    "createdAt": "2022-08-31T06:38:21Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/245"
+ },
+ {
+  "number": 243,
+  "title": "Merge master into develop",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-14T23:02:21Z",
+  "closedAt": "2022-07-14T23:02:21Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/243"
+ },
+ {
+  "number": 242,
+  "title": "Docs improvements",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-08-18T19:16:28Z",
+  "closedAt": "2022-08-18T19:16:28Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/242"
+ },
+ {
+  "number": 241,
+  "title": "citation information",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-12T21:50:01Z",
+  "closedAt": "2022-07-12T21:50:01Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/241"
+ },
+ {
+  "number": 238,
+  "title": "fix: prevent plot name collision that stops rendering",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-08T08:28:23Z",
+  "closedAt": "2022-07-08T08:28:23Z",
+  "comments": [
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "`layouts[\"{{ section_index }}-{{ plot_type }}\"]`  won't work as every feature has different layout (different axis and labels). So the layout is actually being overwritten by last feature's layout ( If you see the report generated, in histograms you will see layout of TAXI_OUT instead of AIRLINE). So, the \"curr\" variable needs to be used.  ",
+    "path": "popmon/visualization/templates/section.html",
+    "createdAt": "2022-07-08T06:39:47Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "No need of Count now with new card_id.",
+    "path": "popmon/visualization/templates/section.html",
+    "createdAt": "2022-07-08T06:41:12Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/238"
+ },
+ {
+  "number": 237,
+  "title": "feat: group comparisons",
+  "body": "feat: group comparisons\r\n\r\ncloses ing-bank/popmon#231",
+  "state": "MERGED",
+  "author": {
+   "login": "pradyot-09"
+  },
+  "mergedAt": "2022-07-07T21:43:35Z",
+  "closedAt": "2022-07-07T21:43:36Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/237"
+ },
+ {
+  "number": 236,
+  "title": "v1.0.0 release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-08T08:38:06Z",
+  "closedAt": "2022-07-08T08:38:06Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/236"
+ },
+ {
+  "number": 235,
+  "title": "feat: more general hist comparer",
+  "body": null,
+  "state": "OPEN",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/235"
+ },
+ {
+  "number": 234,
+  "title": "feat: entropy profile",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-07T15:55:13Z",
+  "closedAt": "2022-07-07T15:55:13Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/234"
+ },
+ {
+  "number": 232,
+  "title": "Profiles and comparisons tabular format (docs) + CI improvement",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-05T16:47:33Z",
+  "closedAt": "2022-07-05T16:47:33Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/232"
+ },
+ {
+  "number": 229,
+  "title": "Self split reference + CI improvements",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-05T12:56:19Z",
+  "closedAt": "2022-07-05T12:56:19Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/229"
+ },
+ {
+  "number": 228,
+  "title": "Add section on external profiles to readme",
+  "body": "This PR adds a small section to the readme with some details on external profiles and diptest.\r\n\r\n## Enhancements\r\n\r\n* bdf71133ef5d63211e9caa7f30a627da8afea795 -- add section on external profiles\r\n\r\n## Changes\r\n\r\n* 9a706e3220b573b57b77407a0bf8a9df54be1312 -- make bulleted list of profiles easier to read\r\n",
+  "state": "MERGED",
+  "author": {
+   "login": "RUrlus"
+  },
+  "mergedAt": "2022-06-30T08:44:10Z",
+  "closedAt": "2022-06-30T08:44:10Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/228"
+ },
+ {
+  "number": 227,
+  "title": "Profile/Comparison Extension Functionality + Dip Test Implementation",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-12T22:02:08Z",
+  "closedAt": "2022-07-12T22:02:08Z",
+  "comments": [
+   {
+    "author": {
+     "login": "RUrlus"
+    },
+    "body": "I would suggest to add uniform noise to the samples, as diptest assumes a continuous distribution.\r\ne.g.\r\n```python\r\nrng = np.random.default_rng()\r\nhwb = (bin_centers[1] - bin_centers[0]) / 2\r\nsample = np.repeat(bin_centers, bin_values.astype(int)) + rng.uniform(-hbw, hbw, bin_values.sum())\r\n```",
+    "path": "popmon/extensions/profile_diptest.py",
+    "createdAt": "2022-06-29T14:06:52Z"
+   },
+   {
+    "author": {
+     "login": "RUrlus"
+    },
+    "body": "Note that `sort_x` should be true\r\n",
+    "path": "popmon/extensions/profile_diptest.py",
+    "createdAt": "2022-06-29T14:25:40Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/227"
+ },
+ {
+  "number": 225,
+  "title": "Interactive plots in report",
+  "body": "Conflicts resolved from [pradyot-09:feat/plotly-express](https://github.com/ing-bank/popmon/pull/216)\r\n\r\nPrimary changes:\r\n- Interactive plots through plotly (replacing matplotlib base64 encoded images)\r\n- Reduced report file size",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-05T15:19:28Z",
+  "closedAt": "2022-07-05T15:19:28Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Preferably use a configuration item or variable. We would like to be able to set colorblind-friendly traffic light colors.",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-06-30T13:19:32Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Is it possible to merge the update_layout(barmode=(..)) with this statement?",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-06-30T13:49:44Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Could you move this xtick function out of this (and take top as parameter)? The version in plot_heatmap_b64 is actually correct.",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-06-30T13:54:37Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Console log could be removed when development is done",
+    "path": "popmon/visualization/templates/section.html",
+    "createdAt": "2022-06-30T13:56:24Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Preferably pass the feature mapping rather than the zip function (see section.html)\r\n\r\n`zip(feature.types,feature.layout)`",
+    "path": "popmon/visualization/report_generator.py",
+    "createdAt": "2022-06-30T13:58:35Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "+ and not rendered before",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T13:59:17Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Console.log should be removed after development",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T13:59:50Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "TESTER is non-informative, `plot_container_element`?",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:00:22Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Loading icon should be included in popmon css/base64",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:01:55Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "JSON.parse should not be needed here, we could just provide the javascript object directly.",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:21:51Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "The `shapes` variable is only used ones, right? Direct assignment to layout[\"shapes\"] would be a bit conciser",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:23:34Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "`range` variable not needed",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:24:26Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "These delete statements should not be required in the cases where the values are overwritten later.",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:25:16Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Repalce .style.display = \"none\" with remove class \"loading\". \r\nAlso add a data attribute, e.g. \"data-loaded\" that signals that the plot is shown\r\n\r\n\r\n(https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes)",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:27:38Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "This should go in \"footer.html\"",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-30T14:28:19Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Only add the loading if it's needed (e.g. add a class to the above div conditionally. ",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:29:41Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "After rendering, this javascript block can also be removed from the dom",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-06-30T14:35:34Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "When the contents is static, zip is not really needed.\r\n\r\nA list with a single tuple would have the same effect:\r\n`[(\"traffic_lights\", \"\")]`",
+    "path": "popmon/visualization/alert_section_generator.py",
+    "createdAt": "2022-07-04T10:15:55Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Typo `Pomparisons`",
+    "path": "popmon/config.py",
+    "createdAt": "2022-07-04T10:17:13Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Zip not needed here",
+    "path": "popmon/visualization/alert_section_generator.py",
+    "createdAt": "2022-07-04T10:17:32Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Now that zip is moved from the template to the logic, we can see that if the layouts are associated with the plot type, then a dictionary/mapping might be a more appropriate data structure. ",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-07-04T10:19:19Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Shouldn't this be `plot_type_layouts`?",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-07-04T10:19:46Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "All files below are concatenated in the same script tag. For consistency, we should do this for plotly too. ",
+    "path": "popmon/visualization/templates/footer.html",
+    "createdAt": "2022-07-04T10:22:47Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "JSON should not be needed here (the layout could be stored as literal)",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-07-04T10:24:03Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Tip to prevent code duplication. Rather than this pattern:\r\n```\r\nif a:\r\n    function(a)\r\nelse:\r\n   function(default_params)\r\n```\r\n\r\nYou could also write\r\n\r\n```\r\nif not a:\r\n   a = default_params\r\n\r\nfunction(a)\r\n```\r\n\r\nAs long as `a` is a local variable not being used later on, this will be more maintainable.\r\n\r\n",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-07-04T10:26:22Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Newline can be removed now that javascript is moved to the footer (then the file won't show up in the diff)",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-07-04T10:28:48Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "`{scrollZoom (...) ['lasso2f'])` could also be a global variable for slightly better compression",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-07-04T10:31:04Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "I used to JSON.stringify  and JSON.parse to make a deep copy of the layout. Else, update to var layout results in change of original layout.\r\n",
+    "path": "popmon/visualization/templates/card.html",
+    "createdAt": "2022-07-04T11:15:46Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "\"type\" is on individual plot level. \"plot_type_layouts\" is on feature level. (see line 166)",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-07-04T13:40:40Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/225"
+ },
+ {
+  "number": 223,
+  "title": "Merge master into develop",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2022-06-22T07:46:15Z",
+  "closedAt": "2022-06-22T07:46:15Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/223"
+ },
+ {
+  "number": 222,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2022-06-21T19:35:34Z",
+  "closedAt": "2022-06-21T19:35:34Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/222"
+ },
+ {
+  "number": 221,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2022-06-15T12:16:16Z",
+  "closedAt": "2022-06-15T12:16:16Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/221"
+ },
+ {
+  "number": 220,
+  "title": "histogrammar number of bins fix",
+  "body": "Fixed rounding error in num_bins call of Bin histogram, which is needed for plotting of cropped histograms \r\nin histogram section of the report.",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2022-06-15T11:48:41Z",
+  "closedAt": "2022-06-15T11:48:41Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/220"
+ },
+ {
+  "number": 219,
+  "title": "chore: merge master into develop",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-06-14T09:50:32Z",
+  "closedAt": "2022-06-14T09:50:32Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/219"
+ },
+ {
+  "number": 218,
+  "title": "Merge master into develop",
+  "body": null,
+  "state": "CLOSED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": null,
+  "closedAt": "2022-06-14T09:10:39Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/218"
+ },
+ {
+  "number": 217,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-06-14T09:44:37Z",
+  "closedAt": "2022-06-14T09:44:37Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/217"
+ },
+ {
+  "number": 216,
+  "title": "Feat/plotly express",
+  "body": "-  The histograms, heatmaps and comparisons have been replaced with interactive Plotly graphs. Plotly.js is used to build the graphs on the go from json. \r\n- Initial tests show that plotly reports are smaller in size compared to matplotlib and the takes way less time for report generation compared to matplotlib.\r\n- use parameter 'online_report' to use plotly.js from cdn server and use report online. Else, plotly.js is embedded in the report and can be used offline too.\r\n\r\n![newplot](https://user-images.githubusercontent.com/20689007/172409534-6b0a0967-ebf7-4d12-8f83-51b9c227cd4e.png)\r\n\r\n\r\n![newplot (3)](https://user-images.githubusercontent.com/20689007/172502555-7c3597eb-77dc-4ba1-bf42-c868ed4fb9c1.png)\r\n\r\n\r\n![newplot (2)](https://user-images.githubusercontent.com/20689007/172409584-3dfa097c-bb26-4d8e-8f0e-9bcf9704cc2c.png)\r\n\r\n\r\n\r\n\r\ncloses ing-bank/popmon#164",
+  "state": "CLOSED",
+  "author": {
+   "login": "pradyot-09"
+  },
+  "mergedAt": null,
+  "closedAt": "2022-07-05T09:46:43Z",
+  "comments": [
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Did you use histogrammar v1.0.28? It needs that. \r\n(Not sure this is right otherwise.)",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-06-08T19:02:04Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Should we add this js file to our assets/ instead? \r\n(So there are no external dependencies.) ",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-08T19:03:03Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Already wrote it, but I think if we can switch fully to plotly, we probably should just do that.",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-06-08T19:03:32Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Just remove the line.",
+    "path": "popmon/visualization/utils.py",
+    "createdAt": "2022-06-08T19:04:14Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Same as above (matplotlib dependency).",
+    "path": "requirements.txt",
+    "createdAt": "2022-06-08T19:04:37Z"
+   },
+   {
+    "author": {
+     "login": "tomcis"
+    },
+    "body": "I would say either keep it this way or embed all the `JavaScript` code into the HTML file because the report would not work as a standalone HTML file if we put JS code in assets/. The drawback of adding the `CDN` source (the way Pradyot did) is that the report would not work without the internet, on the contrary, embedding this `JS` code into the `HTML` code itself would make the `HTML` code unreadable.",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-09T19:53:49Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Actually that's what I meant: embed all the JavaScript code into the HTML file. So the report also works in an environment with limited internet access, such as DAP. We could also make a switch for this (so, make it optional) when the report is written out to file. ",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-10T07:04:59Z"
+   },
+   {
+    "author": {
+     "login": "tomcis"
+    },
+    "body": "Agreed, I had something similar in mind regarding the optional parameter.",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-10T09:15:12Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Yes I think that's a nice solution here.",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-10T09:20:01Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "Initially I had the js embedded in the HTML which would allow report to be visible offline but embedding it means 4MB extra file size. But it does make sense to have it available offline and doing it with parameter would be neat.",
+    "path": "popmon/visualization/templates/core.html",
+    "createdAt": "2022-06-10T10:18:57Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "\r\n\r\nQuick wins\r\n- Substantial part of the data  for the plotly javascript is the layout. This is the same for the plots. Reusing the same layout reduced the total file size by 50% in my experiments. Templates may be used as best practise: https://plotly.com/python/templates/#saving-and-distributing-custom-themes.\r\n- Reports are slow to render. This can be solved by lazy loading the rendering of the plots (visible only, or one feature at a time). One example solution is using jQuery https://github.com/morr/jquery.appear, but many similar options exist. Feature-wise, we could leverage the custom-js https://github.com/ing-bank/popmon/blob/master/popmon/visualization/templates/assets/js/custom-script.js.\r\n\r\nImprovements\r\n- The layout above should reflect a consistent style that is readable and clear (be sure to use the same yellow/red, which differs from the default).\r\n- The hover text for the histograms are difficult to read due to the overlay. Use unified hover mode: https://plotly.com/python/hover-text-and-formatting/#unified-hovermode\r\n- The heatmaps have little padding. The aspect-ratio could be set to square: https://plotly.com/python/heatmaps/#controlling-aspect-ratio, and/or padding should be added\r\n- The toolbar for the plots should be simplified by removing redundant icons :https://stackoverflow.com/questions/56659593/how-to-remove-icons-in-plotly-dash-chart-tool-bar/56659783#56659783. At least the logo and lasso tool can be removed.\r\n\r\nFollow-up features:\r\n- By default, the plotly express JS could be integrally included in the HTML file. The CDN option could be a new feature, as bootstrap could also be hosted by a third party. (the `online_report` option)\r\n- Cross filter functionality would be awesome, where selecting a time-window on one plot also updates the others, e.g. https://plotly.github.io/plotly.js-crossfilter.js/",
+    "createdAt": "2022-06-13T12:44:42Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Closing in favour of https://github.com/ing-bank/popmon/pull/225",
+    "createdAt": "2022-07-05T09:46:43Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/216"
+ },
+ {
+  "number": 215,
+  "title": "Protection against (extreme) outliers in sparse histograms",
+  "body": "- Protection against outliers in sparse histograms\r\n  o Protect against extreme outliers in sparse histograms by avoiding the use of its dense representation where possible.\r\n- Performance speedup in histogram summation\r\n  o Replace for loop with np.sum\r\n- Working analysis function unit tests\r\n  o black histogram_section code\r\n  o update of test_report_generator\r\n  o section_generator now passes np arrays to plot_bars_b64, no longer pd.Series.\r\n- Bump up versions of histogrammar and popmon",
+  "state": "MERGED",
+  "author": {
+   "login": "mbaak"
+  },
+  "mergedAt": "2022-06-05T20:18:30Z",
+  "closedAt": "2022-06-05T20:18:30Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/215"
+ },
+ {
+  "number": 214,
+  "title": "Refactor config",
+  "body": "## Preparations for v1.0.0 release\r\n### Config Refactor (breaking)\r\n\r\nStructured config using pydantic.\r\n\r\n- Hierarchical configuration in `config.py` provides context to options\r\n- This setup prevents code duplication (functions with many arguments, various places to set defaults, docstrings...)\r\n- Introducing new parameters is simplified\r\n- Documentation is updated to reflect the new syntax\r\n- Validation is handled by the configuration, e.g. fewer type check in the code\r\n\r\n### Profiles/Comparison Registry refactor (breaking)\r\n\r\nThe Profile and Comparison registries are extended to generalize to other existing implementations (chi2, ks, etc.)\r\nThe definitions are moved from `popmon/stats/numpy.py` to `popmon/analysis/(profiles|comparisons)`\r\n\r\n### Enhancements\r\n- String representation for `Pipeline` and `Module`\r\n- Maintain section position when changing features\r\n- Guarantee the ordering of metrics in traffic lights overview\r\n\r\n### Removed\r\nRemoval of unused functionality:\r\n\r\n- \"worst\" traffic light (unused, trivial to compute post-hoc)\r\n- Plotting of individual alerts and traffic lights (this is replaced by the overview tables)\r\n- docs: Removed outdated `tree`, does not provide any additional information over what's available on github\r\n\r\n### Internal improvements / fixes\r\n- `top` argument for plot_heatmap_b64 is now supported\r\n- Replace `eval` with lambda functions\r\n- Metric pipelines are now constructed of building blocks (functions) to prevent code duplication\r\n- Make test robust against floating point error\r\n- Enable docs api structure and jupyter notebook qa in ci/cd",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-07-04T12:42:30Z",
+  "closedAt": "2022-07-04T12:42:31Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Repeated code",
+    "path": "popmon/analysis/comparison/hist_comparer.py",
+    "createdAt": "2022-06-23T13:32:37Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Duplicate code",
+    "path": "popmon/analysis/profiling/hist_profiler.py",
+    "createdAt": "2022-06-23T13:35:37Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Check pydantic syntax for documentation",
+    "path": "popmon/config.py",
+    "createdAt": "2022-06-23T13:42:59Z"
+   },
+   {
+    "author": {
+     "login": "pradyot-09"
+    },
+    "body": "I think using np.unique(bin_labels, return_counts=True) would be way faster than six comparison operations.\r\ncounts = dict(zip(*np.unique(bin_labels, return_counts=True)))\r\nn_nan = counts[\"NaN\"] + counts[\"nan\"] + counts[\"None\"] + counts[\"none\"] + counts[\"Null\"] + counts[\"null\"]",
+    "path": "popmon/analysis/profiling/profiles.py",
+    "createdAt": "2022-06-26T18:40:10Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Not supported by default \r\n\r\nThere are third-party implementations\r\nhttps://github.com/danields761/pydantic-settings\r\n\r\nFor now users can find the doc(strings) in the config file",
+    "path": "popmon/config.py",
+    "createdAt": "2022-06-27T10:53:15Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Could indeed be cleaned. The value counts should already be present in the histogram anyway.",
+    "path": "popmon/analysis/profiling/profiles.py",
+    "createdAt": "2022-06-27T13:16:19Z"
+   },
+   {
+    "author": {
+     "login": "mbaak"
+    },
+    "body": "Hey Simon, just one comment. \r\nWe should probably take away the kwargs argument here.\r\nThis can also be fixed later, but right now it's a bit confusing.",
+    "path": "popmon/pipeline/metrics.py",
+    "createdAt": "2022-07-04T11:10:38Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Good catch. Is addressed in the follow-up https://github.com/ing-bank/popmon/pulls/229",
+    "path": "popmon/pipeline/metrics.py",
+    "createdAt": "2022-07-04T12:42:16Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/214"
+ },
+ {
+  "number": 213,
+  "title": "fix(report): traffic light flexbox on small screens",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-31T11:00:50Z",
+  "closedAt": "2022-05-31T11:00:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/213"
+ },
+ {
+  "number": 212,
+  "title": "Update synthetic examples",
+  "body": "Hyperplane Logistic Regression example",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-27T18:34:41Z",
+  "closedAt": "2022-05-27T18:34:41Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/212"
+ },
+ {
+  "number": 211,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-27T14:13:10Z",
+  "closedAt": "2022-05-27T14:13:10Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/211"
+ },
+ {
+  "number": 210,
+  "title": "docs(readme): replace report image",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-25T12:03:38Z",
+  "closedAt": "2022-05-25T12:03:38Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/210"
+ },
+ {
+  "number": 209,
+  "title": "fix(report): text contrast and consistent yellow traffic light",
+  "body": "- Fix contrast in text of alert section\r\n- Use consistent yellow/orange throughout the report for traffic lights",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-27T13:36:53Z",
+  "closedAt": "2022-05-27T13:36:53Z",
+  "comments": [
+   {
+    "author": {
+     "login": "tomcis"
+    },
+    "body": "Is there any visual change that I should observe here? Did not see much difference after the visual inspection.",
+    "createdAt": "2022-05-25T15:37:08Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "@tomcis The text color for the alert section should now be light when the background is darker. The other change is that we used to use different colors of red and yellow/orange throughout the report. With this PR all are exactly the same color.",
+    "createdAt": "2022-05-25T16:33:16Z"
+   },
+   {
+    "author": {
+     "login": "tomcis"
+    },
+    "body": "Yes, see it now - looks good! Thanks for the elaboration.",
+    "createdAt": "2022-05-26T06:24:25Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/209"
+ },
+ {
+  "number": 208,
+  "title": "feat(report): overview section for quickly navigating reports ",
+  "body": "aggregate alerts per feature (ordered from descending)\r\nclick the feature name to directly switch to that feature\r\ncloses https://github.com/ing-bank/popmon/issues/202",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-25T10:37:03Z",
+  "closedAt": "2022-05-25T10:37:03Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/208"
+ },
+ {
+  "number": 207,
+  "title": "Profile registry",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-27T18:32:56Z",
+  "closedAt": "2022-05-27T18:32:56Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/207"
+ },
+ {
+  "number": 206,
+  "title": "build(histogrammar): upgrade dependency to 1.0.27",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-23T06:37:58Z",
+  "closedAt": "2022-05-23T06:37:58Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/206"
+ },
+ {
+  "number": 205,
+  "title": "docs(datasets): provide reference implementations for widely-used publicly available synthetic data streams",
+  "body": "This PR contains reference configurations for several publicly available datasets that are widely for evaluating the performance of algorithms dealing with dataset shift.",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-20T18:42:31Z",
+  "closedAt": "2022-05-20T18:42:31Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/205"
+ },
+ {
+  "number": 204,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-20T16:41:50Z",
+  "closedAt": "2022-05-20T16:41:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/204"
+ },
+ {
+  "number": 203,
+  "title": "Feat/heatmap time series plotting",
+  "body": null,
+  "state": "CLOSED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": null,
+  "closedAt": "2022-05-20T16:00:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/203"
+ },
+ {
+  "number": 201,
+  "title": "n-dimensional histogram comparisons and profiles",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-20T12:22:36Z",
+  "closedAt": "2022-05-20T12:22:36Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/201"
+ },
+ {
+  "number": 200,
+  "title": "Performance optimization",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-20T12:23:50Z",
+  "closedAt": "2022-05-20T12:23:50Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/200"
+ },
+ {
+  "number": 198,
+  "title": "Config theme",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-10T08:25:46Z",
+  "closedAt": "2022-05-10T08:25:46Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/198"
+ },
+ {
+  "number": 197,
+  "title": "Initial version of RollingInputFixedReference",
+  "body": "New pipeline for: rolling input histograms and fixed (external) histograms",
+  "state": "OPEN",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": null,
+  "closedAt": null,
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/197"
+ },
+ {
+  "number": 196,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-09T17:21:06Z",
+  "closedAt": "2022-05-09T17:21:06Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/196"
+ },
+ {
+  "number": 195,
+  "title": "Feat/global config",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-09T16:31:24Z",
+  "closedAt": "2022-05-09T16:31:24Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/195"
+ },
+ {
+  "number": 194,
+  "title": "Feature/heatmap time series plotting",
+  "body": "Added heatmap feature to visualize features over time for EDA.\r\n\r\n![image](https://user-images.githubusercontent.com/20689007/167382348-1eab0b4d-6896-437a-ba66-54b983234e33.png)\r\n\r\n<img width=\"926\" alt=\"Screenshot 2022-05-09 at 15 03 53\" src=\"https://user-images.githubusercontent.com/20689007/167382756-ad0a3ecd-4cd3-443e-a98e-7a0af20ee1c0.png\">\r\n\r\nUser can set Heatmap color map by giving the 'cmap' argument pm_stability report().\r\nUser can set top_n argument to deal with high cardinality.\r\nUser can disable specific heatmap by giving heatmap name in the disable_heatmap[] argument in the pm_stability_report().\r\n\r\ncloses ing-bank/popmon#185\r\ncloses ing-bank/popmon#199",
+  "state": "MERGED",
+  "author": {
+   "login": "pradyot-09"
+  },
+  "mergedAt": "2022-05-20T16:39:27Z",
+  "closedAt": "2022-05-20T16:39:27Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Users might want to change this parameter. Suggestion:\r\npass it to _plot_heatmap and set it in HistogramSection similar to `last_n`",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-09T11:04:05Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "It would be nice if the user can disable certain versions of the heatmap if not needed to improve performance. Suggested to pass a config parameter from HistogramSection.",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-09T11:06:16Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Please rebase on the develop branch ",
+    "path": "docs/source/configuration.rst",
+    "createdAt": "2022-05-16T15:49:21Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "default is now set to 0, which is recognized as 20 later on. Might just as well put 20 here and omit the logic later",
+    "path": "popmon/pipeline/report_pipelines.py",
+    "createdAt": "2022-05-16T15:50:18Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "cateforical => categorical",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-16T15:51:32Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Minor, changing this in the following way only requires one check per type:\r\n```\r\nelif d == \"column\":\r\n   pass\r\nelse:\r\n   raise ValueError(\"...\")\r\n```",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-16T15:54:54Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "`i` not needed:\r\n```\r\nfor hist, hist_name in zip(hists, hist_names)\r\n```",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-16T15:57:05Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Row/Column exchanged",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-16T15:59:31Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Is the order returned by `parallel` guaranteed? Passing an identifier in `args` is probably safer",
+    "path": "popmon/visualization/histogram_section.py",
+    "createdAt": "2022-05-16T16:02:29Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "There is a notebook [here](https://github.com/ing-bank/popmon/blob/master/popmon/notebooks/popmon_tutorial_reports.ipynb) describing plot types. Now that we're introducing a new type, it should probably be updated for future reference (a couple of words will be enough).",
+    "createdAt": "2022-05-16T16:07:31Z"
+   },
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "Final tweaks: https://github.com/pradyot-09/popmon/pull/1",
+    "createdAt": "2022-05-20T16:03:42Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/194"
+ },
+ {
+  "number": 193,
+  "title": "feat: Kibana integration example",
+  "body": "This PR contains an initial implementation for Kibana (https://github.com/ing-bank/popmon/issues/158). Users that are interested in such dashboarding, are welcomed to extend this functionality.\r\n\r\n- Add a section 'Reports and integrations' to the readme\r\n- Place the integration example in `examples/integrations/kibana`\r\n- See `examples/integrations/kibana/README.md` for details. ",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-05-16T16:38:27Z",
+  "closedAt": "2022-05-16T16:38:27Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "The stability report produces the results _and_ the report. In this use case, the report is redundant and should be omitted.",
+    "path": "examples/integrations/kibana/popmon_to_elastic.py",
+    "createdAt": "2022-05-09T15:22:29Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/193"
+ },
+ {
+  "number": 192,
+  "title": "Backmerge master into develop",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-04-30T15:32:45Z",
+  "closedAt": "2022-04-30T15:32:45Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/192"
+ },
+ {
+  "number": 191,
+  "title": "docs(readme): extend articles section",
+  "body": "Include articles written by Nagelkerke and Schoonemann",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-04-30T15:33:03Z",
+  "closedAt": "2022-04-30T15:33:03Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/191"
+ },
+ {
+  "number": 190,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-04-29T14:30:15Z",
+  "closedAt": "2022-04-29T14:30:15Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/190"
+ },
+ {
+  "number": 189,
+  "title": "Merge master into develop",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-04-29T13:50:21Z",
+  "closedAt": "2022-04-29T13:50:21Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/189"
+ },
+ {
+  "number": 188,
+  "title": "fix: prevent numpy warnings",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-04-30T16:21:54Z",
+  "closedAt": "2022-04-30T16:21:54Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/188"
+ },
+ {
+  "number": 187,
+  "title": "feat: ci python 3.6 end of life",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2022-04-29T12:32:53Z",
+  "closedAt": "2022-04-29T12:32:53Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/187"
+ },
+ {
+  "number": 186,
+  "title": "fix memory leak",
+  "body": "Fixing matplotlib memory leak with joblib.Parallel",
+  "state": "MERGED",
+  "author": {
+   "login": "stephanecollot"
+  },
+  "mergedAt": "2022-04-29T13:46:47Z",
+  "closedAt": "2022-04-29T13:46:47Z",
+  "comments": [
+   {
+    "author": {
+     "login": "sbrugman"
+    },
+    "body": "LGTM. Wondering why passing the reference to the figure wasn't in place. \n\nTo resolve the ci/cd errors only needs linting with precommit and adding 'fix(plot):' to the commit message.",
+    "createdAt": "2022-04-28T16:56:57Z"
+   }
+  ],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/186"
+ },
+ {
+  "number": 183,
+  "title": "Update release.yml",
+  "body": null,
+  "state": "CLOSED",
+  "author": {
+   "login": "Sharath302"
+  },
+  "mergedAt": null,
+  "closedAt": "2021-12-15T11:36:17Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/183"
+ },
+ {
+  "number": 182,
+  "title": "Release",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-12-13T16:33:55Z",
+  "closedAt": "2021-12-13T16:33:55Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/182"
+ },
+ {
+  "number": 180,
+  "title": "Feat/comparison registry",
+  "body": "Code for #157, #173, #175 and #176.",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-12-13T12:27:43Z",
+  "closedAt": "2021-12-13T12:27:43Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/180"
+ },
+ {
+  "number": 179,
+  "title": "Semantic release CI",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-11-24T16:24:04Z",
+  "closedAt": "2021-11-24T16:24:04Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/179"
+ },
+ {
+  "number": 178,
+  "title": "Feature/release ci",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-11-24T16:21:03Z",
+  "closedAt": "2021-11-24T16:21:03Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/178"
+ },
+ {
+  "number": 177,
+  "title": "v0.5.0",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-11-24T15:51:39Z",
+  "closedAt": "2021-11-24T15:51:39Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/177"
+ },
+ {
+  "number": 171,
+  "title": "refactor: move parallel processing to utils",
+  "body": "centralize configuration\r\nless duplicate code",
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-11-12T15:04:25Z",
+  "closedAt": "2021-11-12T15:04:25Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/171"
+ },
+ {
+  "number": 170,
+  "title": "Ci/codeql",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-10-25T15:39:52Z",
+  "closedAt": "2021-10-25T15:39:52Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/170"
+ },
+ {
+  "number": 169,
+  "title": "Fix docs build",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-10-24T16:41:16Z",
+  "closedAt": "2021-10-24T16:41:16Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/169"
+ },
+ {
+  "number": 168,
+  "title": "ci: auto draft release on tag",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-10-23T21:29:41Z",
+  "closedAt": "2021-10-23T21:29:41Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/168"
+ },
+ {
+  "number": 167,
+  "title": "v0.4.4",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-10-22T13:33:45Z",
+  "closedAt": "2021-10-22T13:33:45Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/167"
+ },
+ {
+  "number": 151,
+  "title": "Refresh notebooks",
+  "body": null,
+  "state": "MERGED",
+  "author": {
+   "login": "sbrugman"
+  },
+  "mergedAt": "2021-11-24T15:16:02Z",
+  "closedAt": "2021-11-24T15:16:02Z",
+  "comments": [],
+  "files": [],
+  "reviews": [],
+  "url": "https://github.com/ing-bank/popmon/pull/151"
+ }
+]
