@@ -2,7 +2,7 @@ PY      ?= conda run -n pr_agent python
 SAMPLE  ?= $(CURDIR)/.sample-context
 PUBLIC  ?= $(CURDIR)/.public-context
 
-.PHONY: help env test lint check doctor sample demo eval eval-public eval-demo clean
+.PHONY: help env test lint check doctor sample demo eval eval-public eval-demo eval-all clean
 
 help:            ## list targets
 	@grep -E '^[a-z]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -39,6 +39,11 @@ eval-demo:       ## retrieval quality on the demo repos (locopy, datacompy) with
 	$(PY) tests/eval/build_public_context.py tests/eval/demo_cases.json $(DEMO)
 	GUARDIAN_CONTEXT=$(DEMO) ./bin/guardian eval tests/eval/demo_cases.json
 
+ALL     ?= $(CURDIR)/.all-context
+eval-all:        ## retrieval quality across all 7 repos in guardian/data (41 tickets)
+	$(PY) tests/eval/build_public_context.py tests/eval/all_repos_cases.json $(ALL)
+	GUARDIAN_CONTEXT=$(ALL) ./bin/guardian eval tests/eval/all_repos_cases.json
+
 clean:
-	rm -rf $(SAMPLE) $(PUBLIC) $(DEMO) .pytest_cache .ruff_cache lib/*.egg-info
+	rm -rf $(SAMPLE) $(PUBLIC) $(DEMO) $(ALL) .pytest_cache .ruff_cache lib/*.egg-info
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

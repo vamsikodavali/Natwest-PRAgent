@@ -5,4 +5,5 @@ __pycache__/
 .sample-context/
 .public-context/
 .demo-context/
+.all-context/
 out/

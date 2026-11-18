@@ -1,0 +1,369 @@
+{
+ "about": "End-to-end retrieval set for all 7 repos in guardian/data, pinned to the commits each technical policy analysed. Targets come from each policy's section 5 (Reusable Components); tickets avoid the function names. Build with `make eval-all`.",
+ "repos": {
+  "locopy": {
+   "url": "https://github.com/capitalone/locopy.git",
+   "sha": "8e3a4f19a121cc5b2cdf815ed267d8d0dd2cada1"
+  },
+  "datacompy": {
+   "url": "https://github.com/capitalone/datacompy.git",
+   "sha": "197365b643e3f253e0b0a51bb18bce9c2520cf23"
+  },
+  "DataProfiler": {
+   "url": "https://github.com/capitalone/DataProfiler.git",
+   "sha": "29e75e35fb65c8f2cad3ad10b912f1551746c7d9"
+  },
+  "rubicon-ml": {
+   "url": "https://github.com/capitalone/rubicon-ml.git",
+   "sha": "09fe62684c9e526a298af16937993540b8fb9401"
+  },
+  "probatus": {
+   "url": "https://github.com/ing-bank/probatus.git",
+   "sha": "6ed08aaf1a685d21c1256e302f8ef0ba9a494f50"
+  },
+  "popmon": {
+   "url": "https://github.com/ing-bank/popmon.git",
+   "sha": "af654436f9c4195cc105735169d5e0595fe5b16e"
+  },
+  "skorecard": {
+   "url": "https://github.com/ing-bank/skorecard.git",
+   "sha": "21217426bc5c62a2eec525d0b45662dccc2a93a3"
+  }
+ },
+ "cases": [
+  {
+   "id": "lc-gzip",
+   "ticket": "Gzip a CSV extract before we push it to the staging bucket",
+   "expect": [
+    "compress_file",
+    "compress_file_list"
+   ],
+   "expand": "gzip=compress,compression; compress_file, gzip_file"
+  },
+  {
+   "id": "lc-split",
+   "ticket": "Split a large extract into several smaller files so the warehouse can load them in parallel",
+   "expect": [
+    "split_file"
+   ],
+   "expand": "split=chunk,partition; split_file, chunk_file"
+  },
+  {
+   "id": "lc-redact",
+   "ticket": "Make sure secret keys never show up when we log the SQL we run",
+   "expect": [
+    "_redact_credentials"
+   ],
+   "expand": "secret keys=credentials,aws_secret_access_key,token; never show up=redact,mask; redact_credentials"
+  },
+  {
+   "id": "lc-yaml",
+   "ticket": "Load the warehouse connection settings from a YAML file",
+   "expect": [
+    "read_config_yaml"
+   ],
+   "expand": "connection settings=config,credentials; read_config, load_config"
+  },
+  {
+   "id": "lc-coltypes",
+   "ticket": "Work out Redshift column types for a dataframe before we create the table",
+   "expect": [
+    "find_column_type"
+   ],
+   "expand": "work out=infer,detect; column types=dtype,schema; infer_column_types"
+  },
+  {
+   "id": "lc-s3url",
+   "ticket": "Break an s3:// URL into its bucket and key",
+   "expect": [
+    "parse_s3_url"
+   ],
+   "expand": "break=parse,split; parse_s3_url, split_s3_path"
+  },
+  {
+   "id": "lc-progress",
+   "ticket": "Show the percentage uploaded while a file is being sent to S3",
+   "expect": [
+    "ProgressPercentage"
+   ],
+   "expand": "percentage=progress,callback; ProgressCallback, upload_progress"
+  },
+  {
+   "id": "lc-kms",
+   "ticket": "Every object we write to S3 must be server-side encrypted with our KMS key",
+   "expect": [
+    "upload_to_s3",
+    "upload_list_to_s3"
+   ],
+   "expand": "write=upload,put; encrypted=sse,encryption,kms_key; upload_to_s3, encrypted_upload"
+  },
+  {
+   "id": "dc-hide-cols",
+   "ticket": "Keep sensitive columns such as account numbers out of the comparison report",
+   "expect": [
+    "hide_sensitive_columns",
+    "_mask_sensitive_column_stats",
+    "reveal_sensitive_columns"
+   ],
+   "expand": "keep out=hide,mask,redact; sensitive=pii; hide_sensitive_columns, mask_columns"
+  },
+  {
+   "id": "dc-extra",
+   "ticket": "Tell the user which pip extra to install when an optional backend like polars is missing",
+   "expect": [
+    "check_module_available"
+   ],
+   "expand": "missing=import error,not installed,available; check_module_available, require_extra"
+  },
+  {
+   "id": "dc-tempcol",
+   "ticket": "Generate a temporary column name that cannot clash with existing columns",
+   "expect": [
+    "temp_column_name"
+   ],
+   "expand": "clash=collision,unique; temp_column_name, unique_column_name"
+  },
+  {
+   "id": "dc-tolerance",
+   "ticket": "Validate the per-column numeric tolerance settings a user passes in",
+   "expect": [
+    "validate_tolerance_parameter",
+    "get_column_tolerance"
+   ],
+   "expand": "tolerance=abs_tol,rel_tol; validate_tolerance"
+  },
+  {
+   "id": "dc-html",
+   "ticket": "Save the comparison report as an HTML file",
+   "expect": [
+    "save_html_report",
+    "report_to_html"
+   ],
+   "expand": "save=write,output; html=render,template; save_html, to_html"
+  },
+  {
+   "id": "dc-snowcfg",
+   "ticket": "Read Snowflake connection details from environment variables or a JSON file",
+   "expect": [
+    "_snowflake_params"
+   ],
+   "expand": "connection details=config,credentials,params; snowflake_params, load_snowflake_config"
+  },
+  {
+   "id": "neg-oauth",
+   "ticket": "Add OAuth2 login to the internal web dashboard",
+   "negative": true,
+   "expand": "oauth2=sso,oidc,login; oauth_login"
+  },
+  {
+   "id": "neg-kafka",
+   "ticket": "Stream change-data-capture events from Kafka into the ledger service",
+   "negative": true,
+   "expand": "cdc=debezium,events; kafka=consumer,topic; consume_events"
+  },
+  {
+   "id": "neg-i18n",
+   "ticket": "Translate user-facing error messages into French",
+   "negative": true,
+   "expand": "translate=i18n,locale,localise; translate_message"
+  },
+  {
+   "id": "dp-url",
+   "ticket": "Download a file from a URL but refuse anything over 1 GB and keep SSL verification on",
+   "expect": [
+    "url_to_bytes"
+   ],
+   "expand": "download=fetch,stream,request; refuse=limit,cap,max size; url_to_bytes, download_url"
+  },
+  {
+   "id": "dp-encoding",
+   "ticket": "Figure out the character encoding of an uploaded CSV before parsing it",
+   "expect": [
+    "detect_file_encoding"
+   ],
+   "expand": "figure out=detect,guess; encoding=charset,utf-8; detect_encoding"
+  },
+  {
+   "id": "dp-s3client",
+   "ticket": "Build an S3 client from explicit keys, else environment variables, else the instance role",
+   "expect": [
+    "create_s3_client",
+    "S3Helper"
+   ],
+   "expand": "client=boto3,session; keys=credentials,aws_access_key_id; create_s3_client"
+  },
+  {
+   "id": "dp-seed",
+   "ticket": "Make random sampling reproducible with a seed taken from an environment variable",
+   "expect": [
+    "get_random_number_generator"
+   ],
+   "expand": "random=rng,generator; reproducible=seed,deterministic; get_rng, random_generator"
+  },
+  {
+   "id": "rb-slug",
+   "ticket": "Turn a project name into a safe folder name for storage paths",
+   "expect": [
+    "slugify"
+   ],
+   "expand": "safe folder name=slug,sanitize,path-safe; slugify"
+  },
+  {
+   "id": "rb-json",
+   "ticket": "Serialise our domain objects, including datetimes and sets, to and from JSON",
+   "expect": [
+    "DomainJSONEncoder",
+    "DomainJSONDecoder",
+    "dumps",
+    "loads"
+   ],
+   "expand": "serialise=encode,dump,json encoder; DomainEncoder, to_json"
+  },
+  {
+   "id": "rb-failure",
+   "ticket": "Let callers choose whether client errors are raised, logged or turned into warnings",
+   "expect": [
+    "set_failure_mode",
+    "failsafe"
+   ],
+   "expand": "choose=mode,policy; errors=exception,failure; failure_mode, failsafe"
+  },
+  {
+   "id": "rb-tags",
+   "ticket": "Filter experiments by their tags using and/or matching",
+   "expect": [
+    "filter_children",
+    "has_tag_requirements",
+    "TagContainer"
+   ],
+   "expand": "filter=select,query; tags=labels; filter_by_tags, has_tags"
+  },
+  {
+   "id": "pm-parallel",
+   "ticket": "Run a function over many inputs in parallel using the configured number of jobs",
+   "expect": [
+    "parallel"
+   ],
+   "expand": "in parallel=joblib,n_jobs,multiprocessing; parallel_map, run_parallel"
+  },
+  {
+   "id": "pm-heatmap",
+   "ticket": "Draw a heatmap of a feature's values over time for the report",
+   "expect": [
+    "plot_heatmap"
+   ],
+   "expand": "draw=plot,figure,plotly; heatmap; plot_heatmap"
+  },
+  {
+   "id": "pm-hist-sum",
+   "ticket": "Add up the total number of entries in a histogram",
+   "expect": [
+    "sum_entries"
+   ],
+   "expand": "add up=sum,count,total; entries=counts,bins; sum_entries, hist_total"
+  },
+  {
+   "id": "pm-registry",
+   "ticket": "Register a new comparison so pipelines can look it up by key",
+   "expect": [
+    "Registry"
+   ],
+   "expand": "register=registry,lookup; comparison=metric; register_comparison"
+  },
+  {
+   "id": "pb-topandas",
+   "ticket": "Accept numpy arrays or lists and turn them into a pandas DataFrame with column names",
+   "expect": [
+    "assure_pandas_df",
+    "preprocess_data"
+   ],
+   "expand": "turn into=convert,coerce,ensure; ensure_dataframe, to_pandas"
+  },
+  {
+   "id": "pb-shap",
+   "ticket": "Compute SHAP feature importance for a tree-based model",
+   "expect": [
+    "calculate_shap_importance",
+    "shap_calc"
+   ],
+   "expand": "importance=shap values,feature importance; explainer; shap_importance"
+  },
+  {
+   "id": "pb-scorer",
+   "ticket": "Accept either an sklearn metric name or a custom scoring function",
+   "expect": [
+    "get_single_scorer",
+    "Scorer"
+   ],
+   "expand": "scoring function=scorer,metric; get_scorer, make_scorer"
+  },
+  {
+   "id": "pb-notfitted",
+   "ticket": "Raise a clear error if someone calls compute before fit",
+   "expect": [
+    "_check_if_fitted",
+    "NotFittedError",
+    "BaseFitComputeClass"
+   ],
+   "expand": "clear error=exception,not fitted; check_is_fitted, NotFittedError"
+  },
+  {
+   "id": "sk-types",
+   "ticket": "Split the dataframe columns into categorical and numerical ones",
+   "expect": [
+    "detect_types"
+   ],
+   "expand": "split=detect,classify,infer; categorical=category,object dtype; detect_types, get_column_types"
+  },
+  {
+   "id": "sk-psi",
+   "ticket": "Measure population stability between training data and current data",
+   "expect": [
+    "psi"
+   ],
+   "expand": "population stability=psi,drift,stability index; psi, population_stability_index"
+  },
+  {
+   "id": "sk-woe",
+   "ticket": "Encode categories with weight of evidence",
+   "expect": [
+    "WoeEncoder"
+   ],
+   "expand": "weight of evidence=woe,encoding; WoEEncoder, woe_encode"
+  },
+  {
+   "id": "sk-points",
+   "ticket": "Convert model probabilities into scorecard points",
+   "expect": [
+    "ScoreCardPoints"
+   ],
+   "expand": "points=score,rescale,pdo; to_scorecard_points"
+  },
+  {
+   "id": "sk-iv",
+   "ticket": "Compute the information value of each feature",
+   "expect": [
+    "iv"
+   ],
+   "expand": "information value=iv,predictive power; information_value, iv"
+  },
+  {
+   "id": "neg-graphql",
+   "ticket": "Add a GraphQL API for account balances",
+   "negative": true,
+   "expand": "graphql=schema,resolver,api; balance_resolver"
+  },
+  {
+   "id": "neg-push",
+   "ticket": "Send push notifications to the mobile banking app",
+   "negative": true,
+   "expand": "push=notification,fcm,apns; send_push"
+  },
+  {
+   "id": "neg-vault",
+   "ticket": "Rotate database passwords every 30 days using Vault",
+   "negative": true,
+   "expand": "rotate=rotation,credential,secret; rotate_password"
+  }
+ ]
+}
