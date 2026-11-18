@@ -8,6 +8,9 @@ cd "$(dirname "$0")/.."
 repo="https://github.com/vamsikodavali/Natwest-PRAgent/pull"
 if [ $# -eq 0 ]; then set -- "$repo/9" "$repo/8"; fi
 page="out/live-prs.md"; done_so_far="out/.live-prs-done.md"; mkdir -p out
+if [ -f "$page" ] && grep -qE "Generated live|OpenHands review" "$page"; then   # keep the previous result
+  mkdir -p out/backup && cp "$page" "out/backup/live-prs-$(date +%Y%m%d-%H%M%S).md" && echo "(saved the previous result to out/backup/)"
+fi
 : > "$done_so_far"
 start=$(date +%s); n=0
 for target in "$@"; do
