@@ -90,6 +90,8 @@ Everything lives in `guardian/`: the skills, `rules.md`, `context/` and the scri
 
 ## Setup
 
+Which skills to load for each workflow, and how to install them: [guardian/skill-packs.md](guardian/skill-packs.md).
+
 ```
 cd guardian
 scripts/fetch-context.sh https://github.com/capitalone/locopy https://github.com/capitalone/datacompy
