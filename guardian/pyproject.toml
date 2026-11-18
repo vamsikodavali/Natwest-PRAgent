@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guardian-kit"
+version = "0.1.0"
+description = "Reuse, PR-history and ownership search behind the OpenHands blueprint skills"
+requires-python = ">=3.9"
+# Runtime is standard library only, on purpose: the skills must run on any
+# developer laptop or CI runner with nothing to install.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+guardian = "guardian_kit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["lib"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["lib", "tests"]
+addopts = "-q"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+src = ["lib", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "I", "SIM", "RUF"]
+# Long regex literals and test fixtures read better unwrapped.
+ignore = ["E501", "RUF001", "SIM108"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["guardian_kit", "sample_context"]

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Entry point for the reuse-check, pr-history and blueprint skills.
+# Prefers the team's `pr_agent` conda env, falls back to any python3 (stdlib only).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+pick_python() {
+  if [[ -n "${GUARDIAN_PYTHON:-}" ]]; then echo "$GUARDIAN_PYTHON"; return; fi
+  local candidates=()
+  [[ "${CONDA_DEFAULT_ENV:-}" == "pr_agent" && -n "${CONDA_PREFIX:-}" ]] && candidates+=("$CONDA_PREFIX/bin/python")
+  [[ -n "${CONDA_EXE:-}" ]] && candidates+=("$(dirname "$(dirname "$CONDA_EXE")")/envs/pr_agent/bin/python")
+  candidates+=(
+    "$HOME/miniconda3/envs/pr_agent/bin/python"
+    "$HOME/anaconda3/envs/pr_agent/bin/python"
+    "$HOME/miniforge3/envs/pr_agent/bin/python"
+    "/opt/homebrew/Caskroom/miniconda/base/envs/pr_agent/bin/python"
+  )
+  for c in "${candidates[@]}"; do
+    [[ -x "$c" ]] && { echo "$c"; return; }
+  done
+  command -v python3 || { echo "guardian: no python3 found" >&2; exit 2; }
+}
+
+PY="$(pick_python)"
+PYTHONPATH="$ROOT/lib${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m guardian_kit "$@"
