@@ -2,7 +2,7 @@
 
 The **Before coding** step of OpenHands. A developer hands over a ticket and gets back one screen: the code that already does it, the past PRs that tried it (and why they were rejected), and the people to ask.
 
-> **New here?** See **[docs/RUN_AND_INTEGRATE.md](docs/RUN_AND_INTEGRATE.md)** for a 60-second demo, running with or without a model, plugging in your own repos, and calling it from `/pr-review` (JSON contract).
+> **New here?** To run the system or the demo, see **[docs/RUNBOOK.md](docs/RUNBOOK.md)**. For the reuse workflow in depth, see **[docs/RUN_AND_INTEGRATE.md](docs/RUN_AND_INTEGRATE.md)** for a 60-second demo, running with or without a model, plugging in your own repos, and calling it from `/pr-review` (JSON contract).
 
 ```bash
 cd guardian
@@ -104,7 +104,7 @@ bin/guardian doctor
 
 ```bash
 conda env create -f environment.yml     # or: make env
-make check                              # ruff + 64 tests (CI runs Python 3.9 and 3.12)
+make check                              # ruff + 67 tests (CI runs Python 3.9 and 3.12)
 make demo                               # builds a sample context with git history and runs a blueprint
 make eval                               # retrieval quality on the sample set (CI gate)
 make eval-public                        # clones pinned public repos, reports the numbers above

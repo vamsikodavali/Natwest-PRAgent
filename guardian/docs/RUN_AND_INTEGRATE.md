@@ -1,5 +1,7 @@
 # Running and integrating the reuse workflow
 
+> To run the whole system or the demo, start with [RUNBOOK.md](RUNBOOK.md). This page goes deeper on the reuse workflow and its JSON interface.
+
 For: anyone on the team who needs to run the blueprint, plug their own repos in, or call reuse and history from another skill (for example `/pr-review`).
 
 ---
@@ -77,9 +79,7 @@ mkdir -p context/repos context/prs
 ln -s ~/code/payments-service context/repos/payments-service       # link a repo you already have, or:
 git clone --depth 300 <url> context/repos/other-repo               # 300 commits is enough for owners
 
-gh pr list --repo org/payments-service --state all --limit 200 \
-  --json number,title,body,state,author,mergedAt,files,reviews,comments,url \
-  > context/prs/payments-service/prs.json                          # review comments give rejection reasons
+scripts/fetch-context.sh https://github.com/org/payments-service   # clone + PR export (gh if logged in, else REST)
 
 ./bin/guardian doctor
 ```

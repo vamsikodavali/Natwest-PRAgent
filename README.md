@@ -88,17 +88,19 @@ claude -p "/pr-review <pull request URL>"
 
 Everything lives in `guardian/`: the skills, `rules.md`, `context/` and the scripts. Run `claude` from inside `guardian/`. The reuse workflow (blueprint, reuse-check, pr-history) is documented in [guardian/docs/RUN_AND_INTEGRATE.md](guardian/docs/RUN_AND_INTEGRATE.md). It can also run without a model: `cd guardian && make demo`.
 
-## Setup
+## Setup and demo
 
-Which skills to load for each workflow, and how to install them: [guardian/skill-packs.md](guardian/skill-packs.md).
+**Start here: [guardian/docs/RUNBOOK.md](guardian/docs/RUNBOOK.md)** covers one-time setup, the 3-step demo with expected results, everyday commands, end-to-end test results and troubleshooting.
 
 ```
 cd guardian
-scripts/fetch-context.sh https://github.com/capitalone/locopy https://github.com/capitalone/datacompy
+scripts/fetch-context.sh https://github.com/capitalone/locopy https://github.com/capitalone/datacompy   # + the other 5 repos in the runbook
 ./bin/guardian doctor
+claude -p "/blueprint $(cat demo/ticket.md)"
+claude -p "/pr-review tests/fixtures/planted.diff"
 ```
 
-`context/` is gitignored, so each person runs this once.
+Which skills to load for each workflow, and how to install them: [guardian/skill-packs.md](guardian/skill-packs.md). Cloned repos in `context/repos/` are not committed; each person fetches them once.
 
 ## Finding format
 
