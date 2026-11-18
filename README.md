@@ -13,10 +13,11 @@ An AI assistant that helps developers reuse what already exists and catches secu
 
 ## What it does
 
-OpenHands reads our existing code and the history of past pull requests, and helps at two moments.
+OpenHands reads our existing code and the history of past pull requests, and helps at three moments.
 
-1. **Before work starts.** A developer gives it a ticket. It returns a blueprint: existing code to reuse, similar past pull requests, and who owns them.
-2. **When a pull request is opened.** It checks the change on four tracks and posts one review comment.
+1. **At setup.** Before any work starts, it loads a skill pack matched to the workflow into the developer's AI coding tool. Examples: `find-skills` to discover the right playbook for a task, and `ponytail` to keep changes small and reuse existing code. Every developer starts with the same guardrails, whichever tool they use, which is aimed at fewer made-up answers and less over-engineering.
+2. **Before coding.** A developer gives it a ticket. It returns a blueprint: existing code to reuse, similar past pull requests, and who owns them.
+3. **When a pull request is opened.** It checks the change on four tracks and posts one review comment.
 
 | Track | Question it answers |
 |---|---|
@@ -34,6 +35,7 @@ flowchart TB
         Rules[("Security, compliance<br/>and cost rules")]
     end
 
+    Setup["Setup: skill pack for the workflow<br/>loaded into the AI coding tool"] --> Ticket
     Ticket["Developer picks up a ticket"] --> Blueprint["Blueprint:<br/>what exists, similar past work, who to ask"]
     Blueprint ==> PR["Developer opens a pull request"]
     PR --> Reuse["Reuse"] & History["History"] & Sec["Security and<br/>compliance"] & Cost["Cost"]
@@ -48,6 +50,7 @@ flowchart TB
 
 | Today | With OpenHands |
 |---|---|
+| Each developer configures their AI coding tool differently, and output quality varies | One skill pack per workflow, loaded at setup |
 | Developers find out at review that the feature already exists | They are told before writing any code |
 | Reviewers check secrets, logging and cost by eye | Those checks arrive with the pull request |
 | Past decisions are forgotten | Similar past pull requests are cited in the review |
@@ -74,7 +77,8 @@ context/
   pr-history/
   security-compliance/
   cost/
-rules.md     compliance and cost rules, each with an ID
+rules.md         compliance and cost rules, each with an ID
+skill-packs.md   which skills to load at setup for each workflow
 ```
 
 ```
