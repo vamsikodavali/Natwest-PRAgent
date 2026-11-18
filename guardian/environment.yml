@@ -1,0 +1,10 @@
+# conda env create -f guardian/environment.yml   (or: conda env update -f ... --prune)
+name: pr_agent
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - git
+  - pip
+  - pip:
+      - -e .[dev]

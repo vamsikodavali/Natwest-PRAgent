@@ -1,0 +1,36 @@
+name: guardian
+
+on:
+  pull_request:
+    paths: ["guardian/**", ".github/workflows/guardian.yml"]
+  push:
+    branches: [main]
+    paths: ["guardian/**", ".github/workflows/guardian.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12"]
+    defaults:
+      run:
+        working-directory: guardian
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: ruff check lib tests
+      - run: pytest
+      - name: Smoke test the CLI on the sample context
+        run: |
+          python tests/sample_context.py "$RUNNER_TEMP/ctx"
+          GUARDIAN_CONTEXT="$RUNNER_TEMP/ctx" ./bin/guardian doctor
+          GUARDIAN_CONTEXT="$RUNNER_TEMP/ctx" ./bin/guardian blueprint "mask account numbers before logging" | tee out.md
+          grep -q mask_account_number out.md
