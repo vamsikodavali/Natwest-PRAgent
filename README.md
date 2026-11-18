@@ -86,6 +86,8 @@ claude -p "/blueprint <ticket text>"
 claude -p "/pr-review <pull request URL>"
 ```
 
+Run `claude` from inside `guardian/`. The reuse workflow (blueprint, reuse-check, pr-history) is documented in [guardian/docs/RUN_AND_INTEGRATE.md](guardian/docs/RUN_AND_INTEGRATE.md). It can also run without a model: `cd guardian && make demo`.
+
 ## Demo scenario
 
 1. A ticket asks for a feature that an existing helper already covers. The blueprint points to that helper.

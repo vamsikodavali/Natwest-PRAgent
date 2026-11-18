@@ -2,8 +2,12 @@
 
 The **Before coding** step of OpenHands. A developer hands over a ticket and gets back one screen: the code that already does it, the past PRs that tried it (and why they were rejected), and the people to ask.
 
+> **New here?** See **[docs/RUN_AND_INTEGRATE.md](docs/RUN_AND_INTEGRATE.md)** for a 60-second demo, running with or without a model, plugging in your own repos, and calling it from `/pr-review` (JSON contract).
+
 ```bash
 cd guardian
+make demo                                        # no model needed: sample context, one blueprint
+./bin/guardian blueprint "<ticket>"              # engine only, local, free
 claude -p "/blueprint $(cat ticket.md)"          # verified blueprint, one screen
 claude -p "/reuse-check <description or diff>"   # did we already build this?
 claude -p "/pr-history  <description or diff>"   # was this tried or rejected before?
