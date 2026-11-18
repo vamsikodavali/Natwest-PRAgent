@@ -47,6 +47,8 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
 
    **3 blockers · 2 warnings · 1 note** · advisory only, a human reviewer decides
 
+   **PR:** `acme/orders#42` by `jsmith` · **Change belongs to:** `datacompy` · **Searched:** `locopy`, `datacompy` (200 past PRs)
+
    ### 🛑 Fix before merge
 
    | Where | Issue | Evidence |
@@ -58,6 +60,13 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
    | Where | Issue | Evidence |
    |---|---|---|
    | `src/a.py:13` | Duplicates an existing S3 upload helper | `locopy/locopy/s3.py:183` |
+
+   ### 👥 Who to ask
+
+   | Who | Repo | Why |
+   |---|---|---|
+   | `capitalone/locopy-admin-team` | `locopy` | Code owner of `locopy/s3.py`, the helper to reuse |
+   | `Faisal` | `locopy` | Last changed `locopy/s3.py`; reviewed #399 |
 
    <details>
    <summary>How to fix each one (6)</summary>
@@ -84,6 +93,9 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
    - **Issue** cell: at most 8 words, no trailing full stop. **Evidence** cell: rule IDs, `repo/path:line` or `#PR (repo)` only, in backticks.
    - **INFO findings** do not get a table. They go under **Notes** inside the details block.
    - **Details block:** one line per finding, `where` issue → fix, grouped under **Security**, **Cost**, **Reuse**, **History**, **Notes**, only groups that have findings. One sentence per fix. For reuse, the fix is the real call from the track's `Call:` line.
+   - **PR line:** author from `gh pr view <url> --json author --jq .author.login` (omit `by ...` for a local diff or when gh is not logged in). "Change belongs to" is the repo you told the tracks about in step 3. "Searched" lists the folders in `context/repos/` and the PR count from `./bin/guardian doctor`.
+   - **Who to ask:** only when there is a reuse or history finding. For each file cited as reuse evidence, run `./bin/guardian owners <repo>/<path>` and take the code owners and the most recent committer. Add the reviewer named in a cited past PR. At most 4 rows, no duplicates. "Why" says what they own or did, in under 12 words.
+   - **People are never notified and no contact details are published:** write every person, team or handle inside backticks and without a leading `@`. Never write an email address anywhere in the comment.
    - **Footer:** each track gets `✓` (ran), `–` (not installed) or `✗` (failed).
    - Keep a blank line after `<summary>` and before `</details>`, or GitHub will not render the Markdown inside.
    - Escape any `|` inside table cells as `\|` and keep each cell on one line.
