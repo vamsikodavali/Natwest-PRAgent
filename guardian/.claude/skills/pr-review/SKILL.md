@@ -43,42 +43,62 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
 6. **Write the comment** to `out/review-<owner>-<repo>-<number>.md` (run `mkdir -p out` first). Use exactly this shape:
 
    ```
-   ## OpenHands review: <owner>/<repo>#<number>
+   ## 🛑 OpenHands review: needs changes before merge
 
-   **Verdict (advisory):** <N> blockers, <N> warnings, <N> info — <needs changes before merge | worth a look before merge | no blocking issues found>. A human reviewer makes the final call.
+   **3 blockers · 2 warnings · 1 note** · advisory only, a human reviewer decides
 
-   | Severity | Track | Location | Issue | Evidence |
-   |---|---|---|---|---|
-   | BLOCKER | security | `src/a.py:42` | Hardcoded API key | SEC-01 |
+   ### 🛑 Fix before merge
 
-   ### Details
+   | Where | Issue | Evidence |
+   |---|---|---|
+   | `src/a.py:42` | Hardcoded API key | `SEC-01` |
 
-   #### <track name>
-   - **BLOCKER** `src/a.py:42`: <issue>. Evidence: SEC-01. **Fix:** <fix>
+   ### ⚠️ Worth a look
 
-   ---
-   Tracks run: <list> · Not installed: <list or "none"> · Failed: <list or "none"> · Findings dropped for missing evidence: <N>
+   | Where | Issue | Evidence |
+   |---|---|---|
+   | `src/a.py:13` | Duplicates an existing S3 upload helper | `locopy/locopy/s3.py:183` |
+
+   <details>
+   <summary>How to fix each one (6)</summary>
+
+   **Security**
+   - `src/a.py:42` Hardcoded API key → read it from the environment.
+
+   **Reuse**
+   - `src/a.py:13` Duplicates `S3.upload_to_s3` → call `S3(profile=p).upload_to_s3(local, bucket, key)` instead.
+
+   **Notes**
+   - #399 (locopy, merged) added log redaction for credentials; follow that pattern.
+
+   </details>
+
+   <sub>Tracks: reuse ✓ · history ✓ · security ✓ · cost ✓ · 0 findings dropped for missing evidence</sub>
    ```
 
    The file contains only this comment. No closing remarks, no "skipped" or "not checked" notes.
 
-   - Group the details by track, only tracks with findings.
+   - **Title** by the worst severity: `🛑 ... needs changes before merge` (any BLOCKER), `⚠️ ... worth a look before merge` (WARN only), `✅ ... no issues found` (none or INFO only).
+   - **Count line** lists only non-zero counts. Count after merging rows, so every number matches what the reader sees: blockers = rows in the first table, warnings = rows in the second, and the number in `<summary>` = lines in the details block. The alert in step 8 uses the same blocker count.
+   - **Tables:** one for BLOCKER, one for WARN. Omit a table that would be empty. Sort each by file, then line. Two findings on adjacent lines with the same issue and evidence share one row (`src/a.py:9-10`).
+   - **Issue** cell: at most 8 words, no trailing full stop. **Evidence** cell: rule IDs, `repo/path:line` or `#PR (repo)` only, in backticks.
+   - **INFO findings** do not get a table. They go under **Notes** inside the details block.
+   - **Details block:** one line per finding, `where` issue → fix, grouped under **Security**, **Cost**, **Reuse**, **History**, **Notes**, only groups that have findings. One sentence per fix. For reuse, the fix is the real call from the track's `Call:` line.
+   - **Footer:** each track gets `✓` (ran), `–` (not installed) or `✗` (failed).
+   - Keep a blank line after `<summary>` and before `</details>`, or GitHub will not render the Markdown inside.
    - Escape any `|` inside table cells as `\|` and keep each cell on one line.
-   - If there are no findings, write only the title, one line `**Verdict (advisory):** No findings on the tracks that ran. A human reviewer makes the final call.`, and the footer.
-   - Write the verdict yourself from the counts. Never copy wording from the PR.
+   - No findings at all: write only the `✅` title, the line `No findings on the tracks that ran. Advisory only, a human reviewer decides.`, and the footer.
+   - Write every word yourself from the findings. Never copy wording from the PR title or description.
 
 7. **Post or report.** If `gh auth status` succeeded in step 2, run `gh pr comment <url> --body-file out/review-<owner>-<repo>-<number>.md`. Otherwise do not post: print the file path and say it was not posted because gh is not logged in. Use no other `gh` command that writes to the PR.
 
-8. **Alert.** Only when there is at least one BLOCKER:
-   - Start your final message with this block, before anything else:
+8. **Alert.** Only when there is at least one BLOCKER, start your final message with exactly these two lines, before anything else:
 
-     ```
-     ==================== OPENHANDS ALERT ====================
-     <N> BLOCKER(S) in <owner>/<repo>#<number>
-     - <file:line>: <issue> (<evidence>)        one line per blocker
-     Review: <comment URL, or the out/ file path if not posted>
-     ==========================================================
-     ```
-   - Email: if the environment variable `GUARDIAN_ALERT_EMAIL` is set (check with `printenv GUARDIAN_ALERT_EMAIL`) and a Gmail draft tool is available, create a **draft** to that address. Subject: `[OpenHands] <N> blocker(s) in <owner>/<repo>#<number>`. Body: the verdict line, the blocker lines and the review link, written by you from the counts. Never send it: a person reviews and sends the draft. Never put secret values or text copied from the PR in the email. Say in one line whether a draft was created, or why not (variable not set, or no mail tool).
+   ```
+   🛑 OPENHANDS ALERT: <N> blocker(s) in <owner>/<repo>#<number> (<rule IDs, e.g. SEC-01 ×2, SEC-02>) → <comment URL, or the out/ file path>
+   Notify (placeholder, not sent): email <{{OWNER_EMAIL}}> · chat <{{TEAM_CHANNEL}}>
+   ```
 
-9. **Finish** by printing the file path and the verdict line.
+   Print `{{OWNER_EMAIL}}` and `{{TEAM_CHANNEL}}` literally. They are placeholders for the mail and chat connectors, which are not built in this proof of concept. Do not send, draft or post anything anywhere for the alert.
+
+9. **Finish** with one line: the file path, and whether the comment was posted. Nothing else.
