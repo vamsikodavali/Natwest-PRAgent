@@ -86,6 +86,33 @@ claude -p "/blueprint <ticket text>"
 claude -p "/pr-review <pull request URL>"
 ```
 
+## Finding format
+
+Every track skill outputs one line per finding, and nothing else:
+
+```
+file:line | severity | track | evidence | fix
+```
+
+- `severity`: `BLOCKER`, `WARN` or `INFO`.
+- `track`: `reuse`, `history`, `security` or `cost`.
+- `evidence`: a path in `context/repos/`, a past pull request number, or a rule ID from `rules.md`. A finding with no evidence is dropped.
+- A track with nothing to report outputs `NO FINDINGS`.
+
+Example:
+
+```
+src/loader.py:42 | BLOCKER | security | SEC-01 | Read the key from the environment instead of hardcoding it
+```
+
+## Setup
+
+```
+scripts/fetch-context.sh https://github.com/capitalone/locopy https://github.com/capitalone/datacompy
+```
+
+`context/` is gitignored, so each person runs this once.
+
 ## Demo scenario
 
 1. A ticket asks for a feature that an existing helper already covers. The blueprint points to that helper.
