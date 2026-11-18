@@ -50,3 +50,22 @@ def test_ticket_ids_and_filler_are_not_concepts():
     q = build_query("PAY-512: account numbers appear in full in logs, found by audit")
     assert "pay" not in q.concepts.values()
     assert not {"appear", "found", "full"} & set(q.concepts.values())
+
+
+def test_expansion_links_alternatives_to_ticket_concepts():
+    from guardian_kit.text import expand_query
+
+    q = expand_query(build_query("make debtor account numbers unreadable"), "unreadable=mask,redact; maskPan, retry_call")
+    unreadable = q.concept_of(stem("unreadable"))
+    assert q.concept_of("mask") == unreadable  # linked: counts toward coverage
+    assert {"maskPan", "retry_call"} <= q.identifiers  # exact-name guesses
+    assert q.hints  # unlinked guesses become hint concepts
+    assert q.concept_count == len(q.concepts) - len(q.hints)
+
+
+def test_empty_expansion_is_a_no_op():
+    from guardian_kit.text import expand_query
+
+    a = build_query("mask account numbers")
+    b = expand_query(build_query("mask account numbers"), "  ")
+    assert a.terms == b.terms and not b.hints

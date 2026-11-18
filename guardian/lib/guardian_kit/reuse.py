@@ -41,6 +41,8 @@ NONPROD_PENALTY = 0.5
 NONPROD_PATH = re.compile(r"(^|/)(docs?|scripts?|examples?|samples?|benchmarks?|bench|sandbox|demos?|playground)(/|$)", re.I)
 RELATIVE_CUTOFF = 0.4  # drop candidates scoring under 40% of the best one
 MIN_CONFIDENCE = 0.08  # floor on score / best possible score (every concept in the name)
+NAME_PRECISION_BASE, NAME_PRECISION_GAIN = 0.9, 0.3  # x0.9 (name unexplained) .. x1.2 (fully explained); tuned with `guardian eval`
+SIBLING_RATIO = 0.75  # a same-file hit this close to the best one gets its own entry (grab-bag utils files)
 MIN_CONCEPTS = 2  # a single shared word is not evidence of reuse
 
 
@@ -113,7 +115,8 @@ def index_repo(context: Path, repo: Repo) -> RepoIndex:
     return RepoIndex(repo, files, symbols, rmap)
 
 
-def _idf(symbols: list[Symbol], query: Query) -> dict[str, float]:
+def _idf(symbols: list[Symbol], query: Query) -> tuple[dict[str, float], set[str]]:
+    """(BM25-style idf per query term, terms that occur anywhere in the corpus)."""
     df: Counter[str] = Counter()
     for s in symbols:
         bag = s.name_stems | s.doc_stems | s.path_stems | s.map_stems
@@ -121,13 +124,20 @@ def _idf(symbols: list[Symbol], query: Query) -> dict[str, float]:
             if t in bag:
                 df[t] += 1
     n = max(len(symbols), 1)
-    return {t: math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5)) for t in query.terms}
+    idf = {t: math.log(1 + (n - df[t] + 0.5) / (df[t] + 0.5)) for t in query.terms}
+    return idf, {t for t in query.terms if df[t]}
 
 
-def _ideal_score(query: Query, idf: dict[str, float]) -> float:
-    """Score of an imaginary symbol whose name contains every concept."""
+def _ideal_score(query: Query, idf: dict[str, float], present: set[str]) -> float:
+    """Score of an imaginary symbol whose name holds every *matchable* ticket concept.
+
+    Concepts no symbol in any repo mentions ("hiccup", "Christmas") can't be matched
+    by anything, so they must not drag every candidate under the noise floor.
+    """
     best: dict[int, float] = {}
     for term, (concept, weight) in query.terms.items():
+        if concept in query.hints or term not in present:
+            continue
         best[concept] = max(best.get(concept, 0.0), weight * idf.get(term, 1.0) * FIELD_WEIGHTS["name"])
     return sum(best.values()) * 1.4
 
@@ -152,8 +162,13 @@ def score_symbol(sym: Symbol, query: Query, idf: dict[str, float]) -> tuple[floa
     if not best:
         return 0.0, [], 0.0
     raw = sum(v for v, _ in best.values())
-    coverage = len(best) / max(query.concept_count, 1)
+    coverage = query.primary_hits(best) / max(query.concept_count, 1)
     score = raw * (0.4 + coverage)
+    # How much of the *name* the ticket explains: `PetValidator` for "validate a pet"
+    # is 2/2; `AxiosError`, which only matches through a long docstring, is 0/2.
+    if sym.name_stems:
+        name_precision = len(sym.name_stems & query.terms.keys()) / len(sym.name_stems)
+        score *= NAME_PRECISION_BASE + NAME_PRECISION_GAIN * name_precision
     if query.identifiers and sym.name in query.identifiers:
         score += 6.0
     if sym.is_test:
@@ -181,8 +196,8 @@ def search(
     if indexes is None:
         indexes = [index_repo(context, r) for r in list_repos(context, repos)]
     symbols = [s for ix in indexes for s in ix.symbols]
-    idf = _idf(symbols, query)
-    ideal = _ideal_score(query, idf)
+    idf, present = _idf(symbols, query)
+    ideal = _ideal_score(query, idf, present)
 
     scored: list[Candidate] = []
     for s in symbols:
@@ -190,7 +205,12 @@ def search(
             continue
         score, matched, coverage = score_symbol(s, query, idf)
         min_concepts = min(MIN_CONCEPTS, query.concept_count)
-        if score <= 0 or (len(matched) < min_concepts and not (query.identifiers and s.name in query.identifiers)):
+        exact = bool(query.identifiers) and s.name in query.identifiers
+        # `throttle()`, `speedometer()`: one concept, but it *is* the whole name
+        # and lives in a module named after it (helpers/throttle.js), not a generic method
+        whole_name = (bool(s.name_stems) and s.name_stems <= set(query.terms) and s.kind != "method"
+                      and Path(s.path).stem.lower().replace("_", "") == s.name.lower().replace("_", ""))
+        if score <= 0 or (len(matched) < min_concepts and not (exact or whole_name)):
             continue
         confidence = min(score / ideal, 1.0) if ideal else 0.0
         if confidence < MIN_CONFIDENCE:
@@ -206,7 +226,7 @@ def search(
         if c.score < top * RELATIVE_CUTOFF:
             break
         key = (c.symbol.repo, c.symbol.path)
-        if key in by_file:
+        if key in by_file and c.score < by_file[key].score * SIBLING_RATIO:
             lead = by_file[key]
             label = c.symbol.parent if c.symbol.kind == "method" and c.symbol.parent else c.symbol.name
             lead_label = lead.symbol.parent if lead.symbol.kind == "method" else lead.symbol.name
@@ -215,7 +235,7 @@ def search(
             continue
         if len(out) >= limit:
             continue
-        by_file[key] = c
+        by_file.setdefault(key, c)
         out.append(c)
 
     if with_call_sites:

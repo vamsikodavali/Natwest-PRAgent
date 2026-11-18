@@ -45,11 +45,14 @@ def test_tests_are_excluded_by_default(ctx):
     assert all(not c.symbol.is_test for c in top(ctx, "masks all but last four", limit=10))
 
 
-def test_same_file_hits_are_grouped(ctx):
-    cands = top(ctx, "validate IBAN and sort code bank details")
-    paths = [c.symbol.path for c in cands]
-    assert len(paths) == len(set(paths))
-    assert "is_valid_sort_code" in cands[0].siblings or cands[0].symbol.name == "is_valid_sort_code"
+def test_same_file_hits_are_grouped_unless_both_are_strong(ctx):
+    # both helpers answer the ticket: they get separate entries (grab-bag utils files)
+    both = top(ctx, "validate IBAN and sort code bank details")
+    assert {"is_valid_iban", "is_valid_sort_code"} <= {c.symbol.name for c in both}
+    # a weaker same-file hit is folded into the lead entry instead of taking a slot
+    lead = top(ctx, "mask customer account number digits before logging")[0]
+    assert lead.symbol.name == "mask_account_number"
+    assert "mask_email" in lead.siblings
 
 
 def test_diff_that_reimplements_a_helper_points_to_it(ctx):
@@ -84,3 +87,19 @@ def test_java_doc_comment_is_captured(tmp_path):
     sym = next(s for s in extract_symbols(SourceFile(Repo("r", tmp_path), "A.java", "java", src)) if s.name == "maskPan")
     assert "Masks a card PAN" in sym.doc
     assert sym.parent == "A"
+
+
+def test_java_interface_methods_are_indexed(tmp_path):
+    src = (
+        "public interface OwnerRepository extends JpaRepository<Owner, Integer> {\n"
+        "  /** Owners whose last name starts with the given prefix. */\n"
+        "  Page<Owner> findByLastNameStartingWith(String lastName, Pageable pageable);\n"
+        "  List<PetType> findPetTypes();\n"
+        "}\n"
+        "class X { void run() {\n    return foo(bar);\n    throw new Oops(x);\n    helper(a, b);\n  }\n}\n"
+    )
+    syms = {s.name: s for s in extract_symbols(SourceFile(Repo("r", tmp_path), "O.java", "java", src))}
+    assert {"findByLastNameStartingWith", "findPetTypes"} <= set(syms)
+    assert syms["findByLastNameStartingWith"].parent == "OwnerRepository"
+    assert "last name starts" in syms["findByLastNameStartingWith"].doc
+    assert not {"foo", "Oops", "helper"} & set(syms)

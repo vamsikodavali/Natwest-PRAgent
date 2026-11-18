@@ -1,7 +1,8 @@
 PY      ?= conda run -n pr_agent python
 SAMPLE  ?= $(CURDIR)/.sample-context
+PUBLIC  ?= $(CURDIR)/.public-context
 
-.PHONY: help env test lint check doctor sample demo clean
+.PHONY: help env test lint check doctor sample demo eval eval-public clean
 
 help:            ## list targets
 	@grep -E '^[a-z]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-8s %s\n", $$1, $$2}'
@@ -26,6 +27,13 @@ sample:          ## build the offline sample context
 demo: sample     ## blueprint a ticket against the sample context
 	GUARDIAN_CONTEXT=$(SAMPLE) ./bin/guardian blueprint "Mask customer account numbers before they reach the payment logs"
 
+eval: sample     ## retrieval quality on the sample context (CI gate)
+	GUARDIAN_CONTEXT=$(SAMPLE) ./bin/guardian eval tests/eval/sample_cases.json --min-recall 0.75
+
+eval-public:     ## retrieval quality on pinned public repos (requests, axios, spring-petclinic)
+	$(PY) tests/eval/build_public_context.py tests/eval/public_cases.json $(PUBLIC)
+	GUARDIAN_CONTEXT=$(PUBLIC) ./bin/guardian eval tests/eval/public_cases.json
+
 clean:
-	rm -rf $(SAMPLE) .pytest_cache .ruff_cache lib/*.egg-info
+	rm -rf $(SAMPLE) $(PUBLIC) .pytest_cache .ruff_cache lib/*.egg-info
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

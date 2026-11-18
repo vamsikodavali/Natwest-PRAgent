@@ -16,11 +16,11 @@ _CAMEL_RE = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 _CODE_IDENT_RE = re.compile(r"\b(?:[a-z]+[A-Z][A-Za-z0-9]*|[A-Za-z]+_[A-Za-z0-9_]+)\b")
 
 STOPWORDS = frozenset(
-    ["a", "an", "and", "are", "as", "at", "be", "been", "being", "but", "by", "can", "could", "did", "do", "does", "doing", "done", "for", "from", "had", "has", "have", "having", "he", "her", "here", "him", "his", "how", "i", "if", "in", "into", "is", "it", "its", "itself", "just", "me", "more", "most", "my", "no", "nor", "not", "now", "of", "off", "on", "once", "only", "or", "other", "our", "out", "over", "own", "same", "she", "should", "so", "some", "such", "than", "that", "the", "their", "them", "then", "there", "these", "they", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "were", "what", "when", "where", "which", "while", "who", "whom", "why", "will", "with", "would", "you", "your", "yours", "also", "any", "each", "every", "all", "both", "few", "many", "much", "via", "per", "across", "within", "without", "about", "above", "after", "again", "against", "before", "below", "between", "during", "further", "because", "let", "lets", "get", "gets", "got", "make", "makes", "made", "use", "uses", "used", "using", "need", "needs", "needed", "want", "wants", "wanted", "able", "like", "new", "add", "adds", "added", "adding", "implement", "implementing", "implemented", "implementation", "create", "creates", "creating", "support", "supports", "supported", "feature", "features", "ticket", "story", "task", "please", "ensure", "allow", "allows", "allowing", "user", "users", "developer", "developers", "someone", "something", "thing", "things", "way", "ways", "currently", "existing", "exist", "exists", "already", "instead", "etc", "eg", "ie", "e", "g", "one", "two", "first", "second", "must", "may", "might", "shall", "should", "true", "false", "null", "none", "self", "this", "cls", "return", "returns", "value", "values", "data", "param", "params", "arg", "args", "kwargs", "string", "str", "int", "bool", "list", "dict", "type", "object", "void", "public", "private", "protected", "static", "final", "const", "var", "function", "def", "class", "import", "from", "export", "default", "async", "await", "new"]
+    ["a", "an", "and", "are", "as", "at", "be", "been", "being", "but", "by", "can", "could", "did", "do", "does", "doing", "done", "for", "from", "had", "has", "have", "having", "he", "her", "here", "him", "his", "how", "i", "if", "in", "into", "is", "it", "its", "itself", "just", "me", "more", "most", "my", "no", "nor", "not", "now", "of", "off", "on", "once", "only", "or", "other", "our", "out", "over", "own", "same", "she", "should", "so", "some", "such", "than", "that", "the", "their", "them", "then", "there", "these", "they", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "were", "what", "when", "where", "which", "while", "who", "whom", "why", "will", "with", "would", "you", "your", "yours", "also", "any", "each", "every", "all", "both", "few", "many", "much", "via", "per", "across", "within", "without", "about", "above", "after", "again", "against", "before", "below", "between", "during", "further", "because", "let", "lets", "get", "gets", "got", "make", "makes", "made", "use", "uses", "used", "using", "need", "needs", "needed", "want", "wants", "wanted", "able", "like", "new", "add", "adds", "added", "adding", "implement", "implementing", "implemented", "implementation", "create", "creates", "creating", "support", "supports", "supported", "feature", "features", "ticket", "story", "task", "please", "ensure", "allow", "allows", "allowing", "user", "users", "developer", "developers", "someone", "something", "thing", "things", "way", "ways", "currently", "existing", "exist", "exists", "already", "instead", "etc", "eg", "ie", "e", "g", "one", "two", "first", "second", "must", "may", "might", "shall", "should", "true", "false", "null", "none", "self", "this", "cls", "return", "returns", "arg", "args", "kwargs", "str", "int", "bool", "void", "public", "private", "protected", "static", "final", "const", "var", "function", "def", "class", "import", "from", "export", "default", "async", "await", "new"]
 )
 # Words tickets are full of that never name what the code does.
 TICKET_FILLER = frozenset(
-    ["appear", "appears", "appeared", "appearing", "found", "full", "fully", "issue", "issues", "bug", "bugs", "problem", "problems", "fix", "fixes", "fixed", "fixing", "work", "works", "worked", "still", "see", "seen", "today", "going", "sure", "acceptance", "criteria", "given", "scenario", "because", "currently", "right", "wrong", "correct", "correctly", "properly", "instead", "happen", "happens", "happening", "seems", "team", "teams", "customer-facing", "asap", "urgent", "priority", "sprint", "jira", "story", "points", "estimate", "done", "definition"]
+    ["appear", "appears", "appeared", "appearing", "found", "full", "fully", "issue", "issues", "bug", "bugs", "problem", "problems", "fix", "fixes", "fixed", "fixing", "work", "works", "worked", "still", "see", "seen", "today", "going", "sure", "acceptance", "criteria", "given", "scenario", "because", "currently", "right", "wrong", "correct", "correctly", "properly", "instead", "happen", "happens", "happening", "seems", "team", "teams", "customer-facing", "asap", "urgent", "priority", "sprint", "jira", "story", "points", "estimate", "done", "definition", "bit", "bits", "keep", "keeps", "kept", "lot", "lots", "little", "whenever"]
 )
 STOPWORDS = STOPWORDS | TICKET_FILLER
 
@@ -186,10 +186,16 @@ class Query:
     identifiers: set[str] = field(default_factory=set)
     diff_files: list[str] = field(default_factory=list)
     is_diff: bool = False
+    hints: set[int] = field(default_factory=set)  # concepts that came only from --expand
+    expanded: list[str] = field(default_factory=list)
 
     @property
     def concept_count(self) -> int:
-        return len(self.concepts)
+        """Concepts the ticket itself states. Hint concepts add score but never dilute coverage."""
+        return len(self.concepts) - len(self.hints)
+
+    def primary_hits(self, concept_ids) -> int:
+        return sum(1 for c in concept_ids if c not in self.hints)
 
     def concept_of(self, term_stem: str) -> int | None:
         hit = self.terms.get(term_stem)
@@ -271,4 +277,56 @@ def build_query(text: str, max_concepts: int = 12) -> Query:
             if syn not in q.terms:
                 q.terms[syn] = (concept_id, base * 0.7)
         concept_id += 1
+    return q
+
+
+HINT_WEIGHT = 0.6
+LINKED_WEIGHT = 0.85
+
+
+def expand_query(q: Query, spec: str) -> Query:
+    """Merge model-suggested search terms into ``q``.
+
+    ``spec`` is ``;``-separated groups. ``word=alt1,alt2`` links the alternatives to
+    the ticket concept ``word`` (so they count toward coverage, like a synonym). A
+    bare term becomes a low-weight *hint* concept. Terms that look like code
+    identifiers (``maskPan``, ``redact_pii``) also get an exact-name bonus::
+
+        obscure=mask,redact,hide; account=acct,iban; maskAccountNumber, redact_pii
+    """
+    if not spec or not spec.strip():
+        return q
+    next_id = max(q.concepts, default=-1) + 1
+    for group in re.split(r"[;\n]+", spec):
+        group = group.strip()
+        if not group:
+            continue
+        key, sep, rest = group.partition("=")
+        items = [i.strip() for i in (rest if sep else group).split(",") if i.strip()]
+        target = None
+        if sep:
+            for ks in stems(key):
+                target = q.concept_of(ks)
+                if target is not None:
+                    break
+        for item in items:
+            q.expanded.append(item)
+            if _IDENT_RE.fullmatch(item) and len(split_identifier(item)) >= 2:
+                q.identifiers.add(item)
+            item_stems = [t for t in stems(item) if t not in q.terms]
+            if not item_stems:
+                continue
+            if target is not None:
+                weight = q.terms[q.concepts[target]][1] * LINKED_WEIGHT
+                for t in item_stems:
+                    q.terms[t] = (target, weight)
+                continue
+            # an unlinked phrase is one hint concept (its words reinforce each other)
+            q.concepts[next_id] = item_stems[0]
+            q.hints.add(next_id)
+            for t in item_stems:
+                q.terms[t] = (next_id, HINT_WEIGHT)
+                for syn in synonyms(t):
+                    q.terms.setdefault(syn, (next_id, HINT_WEIGHT * 0.7))
+            next_id += 1
     return q

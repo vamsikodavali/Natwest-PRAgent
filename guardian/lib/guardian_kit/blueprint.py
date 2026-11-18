@@ -44,7 +44,7 @@ def run_blueprint(context: Path, query: Query, reuse_limit=4, pr_limit=4, owner_
     owners.add_pr_people(found, matches)
     ranked = owners.rank(found, owner_limit)
     return {
-        "query": {"concepts": stats["query_concepts"], "is_diff": query.is_diff},
+        "query": {"concepts": stats["query_concepts"], "expanded": query.expanded, "is_diff": query.is_diff},
         "reuse": [c.to_dict() for c in candidates],
         "prs": [m.to_dict() for m in matches],
         "owners": [o.to_dict() for o in ranked],

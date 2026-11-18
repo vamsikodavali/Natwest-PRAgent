@@ -367,7 +367,7 @@ def search(
             continue
         if len(best) < min(MIN_CONCEPTS, query.concept_count) and not shared:
             continue
-        coverage = len(best) / max(query.concept_count, 1)
+        coverage = query.primary_hits(best) / max(query.concept_count, 1)
         score = sum(v for v, _ in best.values()) * (0.4 + coverage)
         score += FILE_OVERLAP_BONUS * min(len(shared), 2) + (DIR_OVERLAP_BONUS if shared_dirs and not shared else 0)
         matched = [query.concepts[c] for c in sorted(best)]

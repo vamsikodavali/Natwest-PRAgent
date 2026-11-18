@@ -39,6 +39,7 @@ You should see `mask_account_number` under **Reuse directly**, PR #142 under **R
 ./bin/guardian history "retry failed gateway calls"    # was it tried or rejected before?
 ./bin/guardian owners  payments-core/src/payments_core/utils/masking.py
 git diff main | ./bin/guardian reuse -                 # a diff works as input too
+./bin/guardian reuse --expand "obscure=mask,redact; maskPan" "obscure card numbers"   # add your own search terms
 
 # full skills
 claude -p "/blueprint $(cat ticket.md)"
@@ -117,7 +118,7 @@ gh pr diff <PR> > /tmp/pr.diff
 ./bin/guardian history --format json --file /tmp/pr.diff --related-file <path touched by the PR> ...
 ```
 
-When the input is a diff, the engine uses only the **added** lines and treats function names defined in the diff as strong signals. Files the diff itself touches are downweighted, so it won't suggest "reuse the code you're editing".
+Write an `--expand` line first (see the reuse-check skill). It's the single biggest quality lever. When the input is a diff, the engine uses only the **added** lines and treats function names defined in the diff as strong signals. Files the diff itself touches are downweighted, so it won't suggest "reuse the code you're editing".
 
 In your skill's frontmatter:
 
@@ -185,4 +186,22 @@ CI (`.github/workflows/guardian.yml`) runs lint, the tests on Python 3.9 and 3.1
 | Field weights and cutoffs | `reuse.py` top of file | Name, breakdown doc, doc comment and path weights; noise floor |
 | Rejection cue words | `history.py: REASON_CUES` | What counts as a reviewer's reason |
 
-When P1 reports a miss, reproduce it with `./bin/guardian reuse --format json "<their wording>"`. Check `query` (the concepts it extracted) and `matched`. Usually the fix is a synonym or a breakdown-doc line, and the scoring doesn't need to change.
+### Measuring quality: `guardian eval`
+
+```bash
+make eval            # sample set; CI fails below 75% top-3 recall
+make eval-public     # 24 tickets on pinned requests/axios/spring-petclinic: currently 62% engine alone, 88% with expansion
+./bin/guardian eval my_cases.json --mode both      # your own labelled tickets on your own context
+```
+
+Case file: a JSON list. `expect` accepts a symbol name, a path suffix, or `path:name`. `expand` is optional and simulates the skill's model step:
+
+```json
+[{"id": "mask", "ticket": "Make account numbers unreadable in logs", "expect": ["mask_account_number"],
+  "expect_prs": ["142"], "expand": "unreadable=mask,redact; mask_account"},
+ {"id": "none", "ticket": "Add dark mode", "negative": true}]
+```
+
+**P1's `reuse-map.md` and `notable-prs.md` should become a case file.** Then "it finds 4 or more items" is a number in CI, not a demo you hope works.
+
+When P1 reports a miss, add it as a case, then reproduce it with `./bin/guardian reuse --format json "<their wording>"`. Check `query` (the concepts it extracted) and `matched`. Usually the fix is a synonym or a breakdown-doc line, and the scoring doesn't need to change.

@@ -1,6 +1,6 @@
 """``guardian`` command line. Every subcommand prints Markdown (default) or JSON.
 
-Exit codes: 0 ok (including "no matches"), 2 bad input or missing context.
+Exit codes: 0 ok (including "no matches"), 1 eval below --min-recall, 2 bad input or missing context.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, history, owners, reuse
+from . import __version__, evaluate, history, owners, reuse
 from .blueprint import (
     render_blueprint,
     render_owners,
@@ -23,7 +23,7 @@ from .blueprint import (
 )
 from .context import ContextError, list_repos, resolve_context
 from .repo_maps import find_map_files
-from .text import build_query
+from .text import build_query, expand_query
 
 
 def _read_input(args) -> str:
@@ -49,10 +49,12 @@ def _add_common(p: argparse.ArgumentParser, with_input: bool = True) -> None:
     if with_input:
         p.add_argument("--file", help="read the ticket, description or diff from this file")
         p.add_argument("text", nargs="*", help="ticket text, feature description or unified diff ('-' = stdin)")
+        p.add_argument("--expand", default="", metavar="SPEC",
+                       help="extra search terms, e.g. 'obscure=mask,redact; maskPan, redact_pii' (see expand_query)")
 
 
 def cmd_reuse(args, ctx: Path, text: str) -> int:
-    q = build_query(text)
+    q = expand_query(build_query(text), args.expand)
     cands, stats = run_reuse(ctx, q, args.limit, repos=args.repo, include_tests=args.include_tests)
     payload = {"query": stats["query_concepts"], "candidates": [c.to_dict() for c in cands], "stats": stats}
     _emit(args, payload, "### Reuse candidates\n" + "\n".join(render_reuse(payload["candidates"])))
@@ -60,7 +62,7 @@ def cmd_reuse(args, ctx: Path, text: str) -> int:
 
 
 def cmd_history(args, ctx: Path, text: str) -> int:
-    q = build_query(text)
+    q = expand_query(build_query(text), args.expand)
     matches, warnings, n = run_history(ctx, q, args.limit, related_files=args.related_file, state=args.state)
     payload = {"query": [q.concepts[c] for c in sorted(q.concepts)], "prs": [m.to_dict() for m in matches],
                "prs_loaded": n, "warnings": warnings}
@@ -85,7 +87,7 @@ def cmd_owners(args, ctx: Path) -> int:
 
 
 def cmd_blueprint(args, ctx: Path, text: str) -> int:
-    q = build_query(text)
+    q = expand_query(build_query(text), args.expand)
     bp = run_blueprint(ctx, q, reuse_limit=args.limit, pr_limit=args.pr_limit, owner_limit=args.owner_limit,
                        repos=args.repo)
     _emit(args, bp, render_blueprint(bp, ticket_title(text)))
@@ -126,6 +128,23 @@ def cmd_doctor(args, ctx: Path) -> int:
     return 0 if repos else 2
 
 
+def cmd_eval(args, ctx: Path) -> int:
+    try:
+        cases = evaluate.load_cases(Path(args.cases))
+    except (OSError, ValueError) as e:
+        print(f"guardian: {e}", file=sys.stderr)
+        return 2
+    modes = evaluate.MODES if args.mode == "both" else (args.mode,)
+    results, summary = evaluate.run(ctx, cases, limit=args.limit, modes=modes)
+    payload = {"summary": summary, "cases": [r.__dict__ for r in results]}
+    _emit(args, payload, evaluate.render(results, summary, modes, args.limit))
+    gate = summary["modes"][modes[0]]["recall@3"]
+    if args.min_recall is not None and gate is not None and gate < args.min_recall:
+        print(f"guardian: recall@3 ({modes[0]}) {gate:.0%} is below --min-recall {args.min_recall:.0%}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="guardian", description="Reuse, PR history and ownership search over context/.")
     ap.add_argument("--version", action="version", version=f"guardian {__version__}")
@@ -155,6 +174,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--owner-limit", type=int, default=3)
     p.add_argument("--repo", action="append")
 
+    p = sub.add_parser("eval", help="measure retrieval quality on a labelled case file")
+    _add_common(p, with_input=False)
+    p.add_argument("cases", help="JSON case file (see guardian_kit/evaluate.py)")
+    p.add_argument("--limit", type=int, default=5)
+    p.add_argument("--mode", choices=("both", "baseline", "expanded"), default="both")
+    p.add_argument("--min-recall", type=float, help="exit 1 if recall@3 of the first mode is below this (0-1)")
+
     p = sub.add_parser("doctor", help="check that context/ is ready")
     _add_common(p, with_input=False)
     return ap
@@ -169,6 +195,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     if args.cmd == "doctor":
         return cmd_doctor(args, ctx)
+    if args.cmd == "eval":
+        return cmd_eval(args, ctx)
     if args.cmd == "owners":
         return cmd_owners(args, ctx)
     text = _read_input(args)

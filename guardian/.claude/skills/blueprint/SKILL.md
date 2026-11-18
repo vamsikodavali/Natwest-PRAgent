@@ -18,8 +18,19 @@ Rule: *evidence or silence*. Every line cites a file path, a PR number or a git 
 
 If the ticket is a path to an existing file, use `--file <path>`; otherwise:
 
+**Before running, write the search terms the ticket doesn't say (one line, no code lookup).** Developers describe *behaviour* ("make it unreadable", "funds land"), while code names *mechanisms* (`mask`, `settlement`). Bridge the gap in this format:
+
+```
+<ticket word>=<alt>,<alt>; <ticket word>=<alt>; <likely_function_name>, <likelyName>
+```
+
+- Link each alternative to the ticket word it replaces (`unreadable=mask,redact,obfuscate`). Linked terms count like the ticket's own words.
+- Add 2 to 4 guesses at function or class names in the repo's style (`mask_account`, `maskPan`). An exact hit gets a strong bonus.
+- 5 to 12 terms in total. Use domain language (`settlement`, `sort code`, `backoff`). Don't add generic words like `data`, `util` or `helper`.
+- This step raised "right helper in top 3" from 62% to 88% on real repos (`make eval-public`), so don't skip it.
+
 ```bash
-./bin/guardian blueprint --format json - <<'GUARDIAN_EOF'
+./bin/guardian blueprint --format json --expand '<your expansion line>' - <<'GUARDIAN_EOF'
 <the ticket, verbatim>
 GUARDIAN_EOF
 ```
