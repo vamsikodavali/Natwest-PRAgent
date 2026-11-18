@@ -10,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, evaluate, history, owners, reuse
+from . import __version__, evaluate, history, importer, owners, reuse
 from .blueprint import (
     render_blueprint,
     render_owners,
@@ -145,6 +145,23 @@ def cmd_eval(args, ctx: Path) -> int:
     return 0
 
 
+def cmd_import_prs(args) -> int:
+    try:
+        if args.gh:
+            prs = importer.from_gh(Path(args.gh))
+        else:
+            if not args.pulls or not args.review_comments:
+                print("guardian: import-prs needs --gh, or --pulls and --review-comments", file=sys.stderr)
+                return 2
+            prs = importer.from_rest(Path(args.pulls), Path(args.review_comments),
+                                     [Path(p) for p in args.issue_comments or []])
+    except (OSError, ValueError, importer.ImportErrorMessage) as e:
+        print(f"guardian: {e}", file=sys.stderr)
+        return 1
+    print(importer.write(prs, Path(args.output)))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="guardian", description="Reuse, PR history and ownership search over context/.")
     ap.add_argument("--version", action="version", version=f"guardian {__version__}")
@@ -181,6 +198,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--mode", choices=("both", "baseline", "expanded"), default="both")
     p.add_argument("--min-recall", type=float, help="exit 1 if recall@3 of the first mode is below this (0-1)")
 
+    p = sub.add_parser("import-prs", help="build a context/prs/<repo>.json export from GitHub API responses")
+    p.add_argument("--gh", help="output of `gh pr list --json ...`")
+    p.add_argument("--pulls", help="REST /pulls response")
+    p.add_argument("--review-comments", help="REST /pulls/comments response")
+    p.add_argument("--issue-comments", action="append", help="REST /issues/comments response (repeatable, one per page)")
+    p.add_argument("-o", "--output", required=True)
+
     p = sub.add_parser("doctor", help="check that context/ is ready")
     _add_common(p, with_input=False)
     return ap
@@ -188,6 +212,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.cmd == "import-prs":
+        return cmd_import_prs(args)  # needs no context folder
     try:
         ctx = resolve_context(args.context)
     except ContextError as e:

@@ -1,6 +1,7 @@
 ---
 name: security-compliance
 description: Use to review a unified diff for security and compliance problems (secrets, PII or credentials in logs, auth changes, disabled TLS) against the SEC- rules in rules.md.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Security and compliance track

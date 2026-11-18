@@ -1,6 +1,7 @@
 ---
 name: cost
 description: Use when reviewing a pull request diff for cloud cost risks (bigger compute, unbounded queries, paid calls in loops).
+allowed-tools: Read, Grep, Glob
 ---
 
 # Cost track
