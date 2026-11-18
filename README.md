@@ -86,17 +86,28 @@ claude -p "/blueprint <ticket text>"
 claude -p "/pr-review <pull request URL>"
 ```
 
+Everything lives in `guardian/`: the skills, `rules.md`, `context/` and the scripts. Run `claude` from inside `guardian/`. The reuse workflow (blueprint, reuse-check, pr-history) is documented in [guardian/docs/RUN_AND_INTEGRATE.md](guardian/docs/RUN_AND_INTEGRATE.md). It can also run without a model: `cd guardian && make demo`.
+
+## Setup
+
+```
+cd guardian
+scripts/fetch-context.sh https://github.com/capitalone/locopy https://github.com/capitalone/datacompy
+./bin/guardian doctor
+```
+
+`context/` is gitignored, so each person runs this once.
+
 ## Finding format
 
-Every track skill outputs one line per finding, and nothing else:
+The `security-compliance` and `cost` skills output one line per finding, and nothing else:
 
 ```
 file:line | severity | track | evidence | fix
 ```
 
 - `severity`: `BLOCKER`, `WARN` or `INFO`.
-- `track`: `reuse`, `history`, `security` or `cost`.
-- `evidence`: a path in `context/repos/`, a past pull request number, or a rule ID from `rules.md`. A finding with no evidence is dropped.
+- `evidence`: a rule ID from `rules.md`. A finding with no evidence is dropped.
 - A track with nothing to report outputs `NO FINDINGS`.
 
 Example:
@@ -105,13 +116,7 @@ Example:
 src/loader.py:42 | BLOCKER | security | SEC-01 | Read the key from the environment instead of hardcoding it
 ```
 
-## Setup
-
-```
-scripts/fetch-context.sh https://github.com/capitalone/locopy https://github.com/capitalone/datacompy
-```
-
-`context/` is gitignored, so each person runs this once.
+The `reuse-check` and `pr-history` skills output their own `### Reuse` and `### Reference PRs` blocks, citing `repo/path:line` or a past pull request number. `pr-review` checks every citation and merges all four tracks into one comment.
 
 ## Demo scenario
 
