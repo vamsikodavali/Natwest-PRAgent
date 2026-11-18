@@ -1,3 +1,5 @@
+import pytest
+
 from guardian_kit import history
 from guardian_kit.text import build_query
 
@@ -53,3 +55,26 @@ def test_authors_own_comment_is_not_the_reason():
                      {"author": "lead", "body": "Do not add a second cache; use the existing ttl_cache."}],
     })
     assert history.rejection_reason(pr)[1] == "lead"
+
+
+def test_flat_export_file_names_the_repo(tmp_path):
+    (tmp_path / "repos" / "locopy").mkdir(parents=True)
+    (tmp_path / "prs").mkdir()
+    (tmp_path / "prs" / "locopy.json").write_text('[{"number": 1, "title": "Add S3 upload", "state": "MERGED"}]')
+    (tmp_path / "prs" / "misc.json").write_text('[{"number": 2, "title": "x", "state": "OPEN"}]')
+    prs, _ = history.load_prs(tmp_path)
+    assert {p.number: p.repo for p in prs} == {"1": "locopy", "2": ""}
+
+
+@pytest.mark.parametrize("title, body, automated", [
+    ("Update dependency pyarrow to v26", "", True),
+    ("chore: bump version to 0.7.1", "", True),
+    ("Changes by run-edgetest action", "Automated changes by edgetest", True),
+    ("Bump urllib3 from 2.0 to 2.7", "", True),
+    ("x", "This PR contains the following updates: | Package |", True),
+    ("feat: add retry to the Redshift loader", "Wraps COPY in backoff.", False),
+    ("Update docs for S3 upload", "", False),
+])
+def test_automated_prs_are_recognised_without_an_author(title, body, automated):
+    pr = history.normalize({"number": 1, "title": title, "body": body, "state": "CLOSED"})
+    assert history.is_automated(pr) is automated

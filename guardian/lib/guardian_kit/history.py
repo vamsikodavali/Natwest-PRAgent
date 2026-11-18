@@ -212,7 +212,10 @@ def load_prs(context: Path) -> tuple[list[PullRequest], list[str]]:
         except (OSError, json.JSONDecodeError) as e:
             warnings.append(f"skipped {f.name}: {e.__class__.__name__}: {e}")
             continue
-        repo_hint = f.parent.name if f.parent != prs_dir else ""
+        if f.parent != prs_dir:
+            repo_hint = f.parent.name  # prs/<repo>/*.json
+        else:  # prs/<repo>.json (scripts/fetch-context.sh)
+            repo_hint = f.stem if (context / "repos" / f.stem).is_dir() else ""
         for d in _unwrap(data):
             pr = normalize(d, source=str(f))
             if not pr:
@@ -225,6 +228,25 @@ def load_prs(context: Path) -> tuple[list[PullRequest], list[str]]:
             seen.add(key)
             prs.append(pr)
     return prs, warnings
+
+
+_AUTOMATED_TITLE = re.compile(
+    r"^(?:chore(?:\([\w-]+\))?:\s*)?(?:bump\b|update dependency\b|update .+ to v?\d|lock file maintenance|"
+    r"changes by run-[\w-]+ action|\[snyk\]|pin dependenc)",
+    re.I,
+)
+_AUTOMATED_BODY = re.compile(
+    r"^(?:automated changes by|this pr contains the following updates|bumps \[?[\w./-]+\]? from|"
+    r"> \[!note\]\s*> this pr body was truncated)",
+    re.I,
+)
+
+
+def is_automated(pr: PullRequest) -> bool:
+    """Bot and dependency-bump PRs, recognised by author or, when exports omit it, by shape."""
+    if pr.author and BOT.search(pr.author):
+        return True
+    return bool(_AUTOMATED_TITLE.search(pr.title) or _AUTOMATED_BODY.search(pr.body.strip()))
 
 
 # ---------------------------------------------------------------- reasons
@@ -349,7 +371,7 @@ def search(
     for pr, fs in zip(prs, fields):
         if state and pr.state != state:
             continue
-        if pr.author and BOT.search(pr.author):
+        if is_automated(pr):
             continue  # dependency bumps and bot PRs are never design precedent
         best: dict[int, tuple[float, str]] = {}
         for term, (concept, weight) in query.terms.items():
@@ -367,7 +389,7 @@ def search(
             continue
         if len(best) < min(MIN_CONCEPTS, query.concept_count) and not shared:
             continue
-        coverage = len(best) / max(query.concept_count, 1)
+        coverage = query.primary_hits(best) / max(query.concept_count, 1)
         score = sum(v for v, _ in best.values()) * (0.4 + coverage)
         score += FILE_OVERLAP_BONUS * min(len(shared), 2) + (DIR_OVERLAP_BONUS if shared_dirs and not shared else 0)
         matched = [query.concepts[c] for c in sorted(best)]

@@ -35,3 +35,6 @@ jobs:
           GUARDIAN_CONTEXT="$RUNNER_TEMP/ctx" ./bin/guardian doctor
           GUARDIAN_CONTEXT="$RUNNER_TEMP/ctx" ./bin/guardian blueprint "mask account numbers before logging" | tee out.md
           grep -q mask_account_number out.md
+      - name: Retrieval quality gate
+        run: |
+          GUARDIAN_CONTEXT="$RUNNER_TEMP/ctx" ./bin/guardian eval tests/eval/sample_cases.json --min-recall 0.75

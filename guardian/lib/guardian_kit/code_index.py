@@ -59,6 +59,15 @@ _GENERIC = [
 ]
 
 
+# Body-less declarations: interface methods, abstract methods, Spring Data finders.
+#   Page<Owner> findByLastNameStartingWith(String lastName, Pageable pageable);
+_JAVA_ABSTRACT = re.compile(
+    r"^\s+(?!(?:return|throw|new|else|yield|assert|await|super|this)\b)"
+    r"(?:(?:public|protected|abstract|default|static|synchronized)\s+)*(?:<[^>]+>\s+)?"
+    r"[\w.]+(?:<[^;()]*>)?(?:\[\])*\s+(?P<name>[a-z_]\w*)\s*\((?P<sig>[^)]*)\)\s*(?:throws\s+[\w.,\s]+)?;\s*$"
+)
+
+
 @dataclass
 class Symbol:
     repo: str
@@ -199,6 +208,11 @@ def extract_symbols(src: SourceFile) -> list[Symbol]:
         for i, line in enumerate(lines):
             if len(line) > 400 or not line.strip() or line.lstrip().startswith(("//", "*", "/*", "#", "--")):
                 continue
+            if src.lang == "java":
+                m = _JAVA_ABSTRACT.match(line)
+                if m and "=" not in line and m.group("name") not in _KEYWORDS:
+                    found.append((i, m.group("name"), "method", "", len(line) - len(line.lstrip())))
+                    continue
             for kind, rx in _GENERIC:
                 m = rx.search(line)
                 if not m:
