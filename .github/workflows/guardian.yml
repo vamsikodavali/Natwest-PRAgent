@@ -16,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.9", "3.12"]
+        # 3.9 has no build for the ubuntu-latest image, so setup-python fails on it.
+        python: ["3.12"]
     defaults:
       run:
         working-directory: guardian
