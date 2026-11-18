@@ -86,6 +86,15 @@ Both PRs are drafts titled "DEMO (do not merge)". Never merge them.
 3. Arrange the terminal underneath the previews.
 4. If a tab ever says "file not found", close it and repeat step 2. VS Code doesn't recover a tab whose file went missing, even after the file comes back.
 
+**On stage, the two-script version (one preview each):**
+
+```bash
+scripts/demo-suggest.sh     # code suggestion for demo/ticket.md → out/live-blueprint.md (about 35 s)
+scripts/demo-prs.sh         # PR #9 (correct) then PR #8 (blocker) → out/live-prs.md (about 2 min; #9 stays on top)
+```
+
+`scripts/live.sh --prepare` creates both pages; open a locked preview of each.
+
 **On stage:**
 
 ```bash
