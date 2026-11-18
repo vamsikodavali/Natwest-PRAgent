@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 from pathlib import Path
 
 from . import history, owners, reuse
@@ -15,6 +16,16 @@ MAX_LINE = 120
 def _clip(s: str, n: int = MAX_LINE) -> str:
     s = " ".join(s.split())
     return s if len(s) <= n else s[: n - 1].rstrip() + "…"
+
+
+_DOC_SECTION = re.compile(r"\s(?:Parameters|Returns|Raises|Yields|Examples?|Notes|Args|Arguments|Attributes)\s*[-:=]{2,}|\s:(?:param|return|rtype|raises)\b|\s@(?:param|return)\b")
+
+
+def doc_summary(doc: str) -> str:
+    """First sentence or paragraph of a docstring, without numpy/sphinx/javadoc sections."""
+    doc = _DOC_SECTION.split(" " + doc, maxsplit=1)[0].strip()
+    m = re.match(r"(.+?[.!?])(\s|$)", doc)
+    return m.group(1) if m and len(m.group(1)) >= 20 else doc
 
 
 def _summary(c: reuse.Candidate) -> str:
@@ -62,7 +73,7 @@ def render_reuse(cands: list[dict]) -> list[str]:
     for i, c in enumerate(cands, 1):
         name = f"{c['parent']}.{c['name']}" if c["kind"] == "method" and c["parent"] else c["name"]
         lines.append(f"{i}. `{name}` - {c['repo']}/{c['path']}:{c['line']}")
-        what = c.get("verdict") or c["doc"] or c["map_note"]
+        what = c.get("verdict") or doc_summary(c["doc"]) or c["map_note"]
         if what:
             lines.append(f"   {_clip(what, MAX_LINE - 3)}")
         if c["call_sites"]:

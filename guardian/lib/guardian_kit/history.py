@@ -33,7 +33,7 @@ REASON_CUES = re.compile(
     r"we already|existing)\b",
     re.I,
 )
-BOT = re.compile(r"(\[bot\]|-bot\b|\bbot$|dependabot|renovate|github-actions|codecov|sonar)", re.I)
+BOT = re.compile(r"(\[bot\]|-bot\b|\bbot$|dependabot|renovate|github-actions|codecov|sonar|cla-?assistant|cla-?bot|allcontributors|netlify|vercel|coveralls|mergify|stale|pre-commit-ci|snyk|deepsource|gitguardian|copilot)", re.I)
 
 
 @dataclass

@@ -18,7 +18,7 @@ from .context import Repo
 
 HALF_LIFE_DAYS = 365.0
 GIT_TIMEOUT_S = 15
-BOT = re.compile(r"(\[bot\]|-bot\b|dependabot|renovate|github-actions|noreply@github\.com$|^bot@|-bot@|jenkins|ci@)", re.I)
+BOT = re.compile(r"(\[bot\]|-bot\b|dependabot|renovate|github-actions|cla-?assistant|cla-?bot|allcontributors|netlify|vercel|coveralls|mergify|stale|pre-commit-ci|snyk|deepsource|gitguardian|copilot|noreply@github\.com$|^bot@|-bot@|jenkins|ci@)", re.I)
 
 
 @dataclass

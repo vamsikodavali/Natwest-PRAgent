@@ -211,6 +211,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == "live":  # stream renderer for scripts/live.sh
+        from . import live
+
+        return live.main(argv[1:])
     args = build_parser().parse_args(argv)
     if args.cmd == "import-prs":
         return cmd_import_prs(args)  # needs no context folder

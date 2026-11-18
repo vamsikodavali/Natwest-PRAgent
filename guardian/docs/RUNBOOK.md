@@ -76,7 +76,43 @@ Both PRs are drafts titled "DEMO (do not merge)". Never merge them.
 
 ---
 
-## 3. Everyday commands
+## 3. Presenting live in VS Code
+
+`scripts/live.sh` runs a skill, prints each step in the terminal as it happens, and writes the result to a Markdown page that VS Code's preview re-renders in place.
+
+**Set up once before you present:**
+1. In the VS Code terminal: `cd guardian && scripts/live.sh blueprint demo/ticket.md --offline` (instant, and creates `out/live-blueprint.md`).
+2. Open `out/live-blueprint.md` and press **Cmd+K V** to open the preview beside it. Close the source tab and keep the preview.
+3. Arrange the terminal underneath the preview.
+
+**On stage:**
+
+```bash
+scripts/live.sh blueprint demo/ticket.md          # the demo ticket, about 30 s
+scripts/live.sh blueprint demo/ticket-drift.md    # the cross-repo "wow" ticket, about 50 s
+scripts/live.sh blueprint "your own ticket text"  # anything the audience suggests
+scripts/live.sh pr-review https://github.com/vamsikodavali/Natwest-PRAgent/pull/9   # the correct PR: ✅ no issues, about 1 min
+scripts/live.sh pr-review https://github.com/vamsikodavali/Natwest-PRAgent/pull/8   # the blocker PR: 🛑 2 blockers + 4 warnings, about 1 min
+```
+
+The PR reviews render in a second preview page, `out/live-pr-review.md`: open it with **Cmd+K V** like the first. It shows the exact comment posted on GitHub, with the alert banner above it for the blocker PR. Each run posts a new comment, so delete old ones on #8 and #9 before presenting if you want a clean thread.
+
+**Suggested flow (about 4 minutes):** blueprint for `demo/ticket.md` → review #9 (correct, it uses the recommended helper) → review #8 (blocked, it ignores the helper and leaks secrets) → open #8 on GitHub to show the posted comment.
+
+While it runs, the preview shows "⏳ Working…" and each verification step, including the search terms the AI added, which is a good moment to narrate. Then it flips to the finished blueprint with a footer giving time, model and cost.
+
+**If the network or login fails:** add `--offline`. The search engine answers in under 1 second with no model, so the run is deterministic and nothing leaves the machine.
+
+| Ticket (tested) | What the audience sees | Time |
+|---|---|---|
+| `demo/ticket.md`: export mismatches to S3 | locopy `S3.upload_to_s3` (forces encryption), datacompy `all_mismatch`, credential-redaction PR #399, owner Faisal | about 30 s |
+| `demo/ticket-drift.md`: credit-model drift | `psi` from skorecard, popmon comparisons, probatus resemblance model, and a warning about open popmon bug #299 | about 50 s |
+| "Scan uploaded customer files for card numbers, SSNs and emails" | DataProfiler `DataLabeler` with the exact labels and thresholds | about 30 s |
+| "Reconcile the ledger against the warehouse with rounding tolerance and an HTML report" | datacompy `PandasCompare(abs_tol=…)` plus `report(html_file=…)` | about 30 s |
+
+---
+
+## 4. Everyday commands
 
 ```bash
 claude -p "/reuse-check <feature description, or path to a .diff>"   # did we already build this?
@@ -90,7 +126,7 @@ Use `--model claude-sonnet-5-5` (the full ID) to choose a model. The bare alias 
 
 ---
 
-## 4. End-to-end test results (18 Nov 2026, Sonnet 5.5, all 7 repos)
+## 5. End-to-end test results (18 Nov 2026, Sonnet 5.5, all 7 repos)
 
 | Test | Result | Time / cost |
 |---|---|---|
@@ -106,7 +142,7 @@ Use `--model claude-sonnet-5-5` (the full ID) to choose a model. The bare alias 
 
 ---
 
-## 5. Troubleshooting
+## 6. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|

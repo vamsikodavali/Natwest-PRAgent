@@ -78,3 +78,9 @@ def test_flat_export_file_names_the_repo(tmp_path):
 def test_automated_prs_are_recognised_without_an_author(title, body, automated):
     pr = history.normalize({"number": 1, "title": title, "body": body, "state": "CLOSED"})
     assert history.is_automated(pr) is automated
+
+
+def test_cla_and_ci_bots_are_never_reviewers():
+    pr = history.normalize({"number": 1, "title": "t", "state": "closed", "author": "dev",
+                            "comments": [{"author": "CLAassistant", "body": "Please sign the CLA before we can accept this."}]})
+    assert history.rejection_reason(pr) == ("", "")
