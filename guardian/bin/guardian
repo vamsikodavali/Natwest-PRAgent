@@ -19,8 +19,15 @@ pick_python() {
   for c in "${candidates[@]}"; do
     [[ -x "$c" ]] && { echo "$c"; return; }
   done
-  command -v python3 || { echo "guardian: no python3 found" >&2; exit 2; }
+  # On Windows `python3` can be a Store stub that exists but does not run, so test it.
+  for c in python3 python; do
+    command -v "$c" >/dev/null 2>&1 && "$c" -c "" >/dev/null 2>&1 && { command -v "$c"; return; }
+  done
+  echo "guardian: no working python found; set GUARDIAN_PYTHON" >&2; exit 2
 }
+
+# Windows consoles default to cp1252, which cannot print the report's symbols.
+export PYTHONUTF8=1
 
 PY="$(pick_python)"
 PYTHONPATH="$ROOT/lib${PYTHONPATH:+:$PYTHONPATH}" exec "$PY" -m guardian_kit "$@"

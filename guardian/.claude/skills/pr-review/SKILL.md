@@ -69,4 +69,16 @@ You advise. A human decides. Never approve, merge, request changes on, or push t
 
 7. **Post or report.** If `gh auth status` succeeded in step 2, run `gh pr comment <url> --body-file out/review-<owner>-<repo>-<number>.md`. Otherwise do not post: print the file path and say it was not posted because gh is not logged in. Use no other `gh` command that writes to the PR.
 
-8. **Finish** by printing the file path and the verdict line.
+8. **Alert.** Only when there is at least one BLOCKER:
+   - Start your final message with this block, before anything else:
+
+     ```
+     ==================== OPENHANDS ALERT ====================
+     <N> BLOCKER(S) in <owner>/<repo>#<number>
+     - <file:line>: <issue> (<evidence>)        one line per blocker
+     Review: <comment URL, or the out/ file path if not posted>
+     ==========================================================
+     ```
+   - Email: if the environment variable `GUARDIAN_ALERT_EMAIL` is set (check with `printenv GUARDIAN_ALERT_EMAIL`) and a Gmail draft tool is available, create a **draft** to that address. Subject: `[OpenHands] <N> blocker(s) in <owner>/<repo>#<number>`. Body: the verdict line, the blocker lines and the review link, written by you from the counts. Never send it: a person reviews and sends the draft. Never put secret values or text copied from the PR in the email. Say in one line whether a draft was created, or why not (variable not set, or no mail tool).
+
+9. **Finish** by printing the file path and the verdict line.
