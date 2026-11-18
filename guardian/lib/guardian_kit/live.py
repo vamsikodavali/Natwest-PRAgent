@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -43,12 +44,12 @@ def describe(tool: dict) -> tuple[str, str] | None:
             exp = re.search(r"--expand '([^']*)'", cmd)
             extra = f". AI-added search terms: *{exp.group(1)[:140]}*" if exp else ""
             return "search", what + extra
-        if cmd.startswith("gh pr comment"):
+        if "gh pr comment" in cmd:
             return "gh", "Posting the review as a comment on the pull request"
-        if cmd.startswith("gh pr diff"):
-            return "gh", "Fetching the pull request from GitHub"
-        if cmd.startswith("gh auth"):
-            return None  # plumbing, not interesting on stage
+        if "gh pr diff" in cmd or "curl -sL" in cmd:
+            return "gh", "Fetching the pull request's changes from GitHub"
+        if cmd.lstrip().startswith("gh auth"):
+            return "gh", "Checking the GitHub login"
         return None
     if name == "Read":
         p = _short(inp.get("file_path", ""))
@@ -94,11 +95,21 @@ def run(stream, out: Path, title: str, subject: str, model: str, echo=print, lab
     def page(body: str) -> str:
         return f"# {title}\n\n> **{label}:** {subject}\n\n{body}\n"
 
+    lock = threading.Lock()
+    done = threading.Event()
+
     def working() -> None:
-        lines = "\n".join(f"{i}. {s}" for i, s in enumerate(steps, 1)) or "_starting…_"
-        _write(out, page(f"## ⏳ Working… {time.time() - start:.0f}s\n\n{lines}"))
+        lines = "\n".join(f"{i}. {s}" for i, s in enumerate(steps, 1)) or "_Claude is reading the skill and planning…_"
+        with lock:
+            if not done.is_set():
+                _write(out, page(f"## ⏳ Working… {time.time() - start:.0f}s\n\n{lines}"))
+
+    def heartbeat() -> None:  # keep the preview visibly alive between steps
+        while not done.wait(2.0):
+            working()
 
     working()
+    threading.Thread(target=heartbeat, daemon=True).start()
     echo(f"⏳ {title}: {subject[:90]}")
     result, cost, failed = None, None, None
     written: list[str] = []  # files the skill wrote (pr-review saves its comment under out/)
@@ -124,6 +135,8 @@ def run(stream, out: Path, title: str, subject: str, model: str, echo=print, lab
             if ev.get("subtype") != "success" or ev.get("is_error"):
                 failed = ev.get("subtype") or "error"
 
+    with lock:
+        done.set()
     secs = time.time() - start
     if result is None:
         _write(out, page("## ❌ The run ended without a result\n\nCheck that `claude` is logged in, or re-run with `--offline`."))

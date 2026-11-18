@@ -81,9 +81,10 @@ Both PRs are drafts titled "DEMO (do not merge)". Never merge them.
 `scripts/live.sh` runs a skill, prints each step in the terminal as it happens, and writes the result to a Markdown page that VS Code's preview re-renders in place.
 
 **Set up once before you present:**
-1. In the VS Code terminal: `cd guardian && scripts/live.sh blueprint demo/ticket.md --offline` (instant, and creates `out/live-blueprint.md`).
-2. Open `out/live-blueprint.md` and press **Cmd+K V** to open the preview beside it. Close the source tab and keep the preview.
-3. Arrange the terminal underneath the preview.
+1. In the VS Code terminal: `cd guardian && scripts/live.sh --prepare`. This creates and opens `out/live-blueprint.md` and `out/live-pr-review.md`.
+2. For each of the two files: **Cmd+Shift+P → "Markdown: Open Locked Preview to the Side"**. A locked preview stays on its file whatever you click next. Close the source tabs.
+3. Arrange the terminal underneath the previews.
+4. If a tab ever says "file not found", close it and repeat step 2. VS Code doesn't recover a tab whose file went missing, even after the file comes back.
 
 **On stage:**
 
